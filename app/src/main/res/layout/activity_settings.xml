@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="org.unifiedpush.distributor.nextpush.activities.SettingsActivity">
+
+    <TextView
+        android:id="@+id/settings_address_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/settings_address_label"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/settings_address_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:ems="10"
+        android:hint="@string/settings_address_hint"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <TextView
+        android:id="@+id/settings_address_help"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="@string/help"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        app:layout_constraintBottom_toBottomOf="@+id/settings_address_value"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settings_address_value" />
+
+    <TextView
+        android:id="@+id/settings_gateway_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/settings_gateway_label"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settings_address_value" />
+
+    <EditText
+        android:id="@+id/settings_proxy_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:ems="10"
+        android:hint="@string/settings_gateway_hint"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+    <Button
+        android:id="@+id/settings_save_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/settings_save_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settings_proxy_value" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/settings_address_information"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settings_address_label" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/settings_gateway_information"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settings_gateway_label" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
