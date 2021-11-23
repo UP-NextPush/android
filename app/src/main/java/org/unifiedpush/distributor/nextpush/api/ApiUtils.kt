@@ -14,7 +14,8 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
 import org.unifiedpush.distributor.nextpush.account.*
 import org.unifiedpush.distributor.nextpush.api.ProviderApi.Companion.mApiEndpoint
-import org.unifiedpush.distributor.nextpush.distributor.MessagingDatabase
+import org.unifiedpush.distributor.nextpush.distributor.getDb
+import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.services.SSEListener
 import retrofit2.NextcloudRetrofitApiBuilder
 import java.util.concurrent.TimeUnit
@@ -112,6 +113,11 @@ class ApiUtils {
     }
 
     fun deleteDevice(context: Context) {
+        val db = getDb(context)
+        db.listTokens().forEach {
+            sendUnregistered(context, it)
+            db.unregisterApp(it)
+        }
         cApi(context) { cDeleteDevice(context) }
     }
 
@@ -160,10 +166,9 @@ class ApiUtils {
                            appName: String,
                            connectorToken: String,
                            callback: ()->Unit) {
-        val db = MessagingDatabase(context)
+        val db = getDb(context)
         if (db.isRegistered(appName, connectorToken)) {
             Log.i("RegisterService","$appName already registered")
-            db.close()
             callback()
             return
         }
@@ -193,7 +198,6 @@ class ApiUtils {
                 }
 
                 override fun onComplete() {
-                    db.close()
                     callback()
                 }
             })

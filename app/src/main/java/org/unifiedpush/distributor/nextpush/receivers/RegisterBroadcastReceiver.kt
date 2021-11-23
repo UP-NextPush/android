@@ -37,10 +37,9 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     return
                 }
                 sendUnregistered(context!!.applicationContext, connectorToken)
-                val db = MessagingDatabase(context.applicationContext)
+                val db = getDb(context.applicationContext)
                 val appToken = db.getAppToken(connectorToken)
                 db.unregisterApp(connectorToken)
-                db.close()
                 ApiUtils().deleteApp(context.applicationContext, appToken) {
                     Log.d(TAG,"Unregistration is finished")
                 }

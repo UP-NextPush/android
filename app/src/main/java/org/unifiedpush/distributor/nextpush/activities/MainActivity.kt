@@ -30,7 +30,7 @@ import org.unifiedpush.distributor.nextpush.account.connect
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.ApiUtils
 import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
-import org.unifiedpush.distributor.nextpush.distributor.MessagingDatabase
+import org.unifiedpush.distributor.nextpush.distributor.getDb
 import java.lang.String.format
 
 private const val TAG = "NextPush-MainActivity"
@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
         try {
             AccountImporter.onActivityResult(
                 requestCode,
@@ -91,6 +90,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 })
         } catch (e: AccountImportCancelledException) {}
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun showMain() {
@@ -120,7 +120,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
-        menu.findItem(R.id.action_logout).isVisible = showLogout
+        menu.findItem(R.id.action_restart).isEnabled = showLogout
+        menu.findItem(R.id.action_logout).isEnabled = showLogout
         return true
     }
 
@@ -179,13 +180,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setListView(){
         listView = findViewById<ListView>(R.id.applications_list)
-        val db = MessagingDatabase(this)
+        val db = getDb(this)
         val tokenList = db.listTokens().toMutableList()
         val appList = emptyArray<String>().toMutableList()
         tokenList.forEach {
             appList.add(db.getPackageName(it))
         }
-        db.close()
         listView.adapter = ArrayAdapter(
                 this,
                 android.R.layout.simple_list_item_1,
@@ -200,10 +200,9 @@ class MainActivity : AppCompatActivity() {
                     alert.setPositiveButton("YES") { dialog, _ ->
                         val connectorToken = tokenList[position]
                         sendUnregistered(this, connectorToken)
-                        val db = MessagingDatabase(this)
+                        val db = getDb(this)
                         val appToken = db.getAppToken(connectorToken)
                         db.unregisterApp(connectorToken)
-                        db.close()
                         ApiUtils().deleteApp(this, appToken) {
                             Log.d(TAG,"Unregistration is finished")
                         }

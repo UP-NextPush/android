@@ -11,10 +11,19 @@ import org.unifiedpush.distributor.nextpush.account.getUrl
 
 private const val TAG = "DistributorUtils"
 
+private var db : MessagingDatabase? = null
+
+fun getDb(context: Context): MessagingDatabase {
+    if (db == null) {
+        db = MessagingDatabase(context)
+    }
+    return db!!
+}
+
 fun sendMessage(context: Context, appToken: String, message: String) {
-    val db = MessagingDatabase(context)
+    val db = getDb(context)
     val connectorToken = db.getConnectorToken(appToken)
-    val application = getApp(context, connectorToken, db)
+    val application = getApp(context, connectorToken)
     if (application.isNullOrBlank()) {
         return
     }
@@ -51,12 +60,9 @@ fun sendUnregistered(context: Context, connectorToken: String) {
     context.sendBroadcast(broadcastIntent)
 }
 
-fun getApp(context: Context,
-           connectorToken: String,
-           db: MessagingDatabase = MessagingDatabase(context)
-): String?{
+fun getApp(context: Context, connectorToken: String): String?{
+    val db = getDb(context)
     val app = db.getPackageName(connectorToken)
-    db.close()
     return if (app.isBlank()) {
         Log.w(TAG, "No app found for $connectorToken")
         null
@@ -66,8 +72,7 @@ fun getApp(context: Context,
 }
 
 fun getEndpoint(context: Context, connectorToken: String): String {
-    val db = MessagingDatabase(context)
+    val db = getDb(context)
     val appToken = db.getAppToken(connectorToken)
-    db.close()
     return "${getUrl(context)}/push/$appToken"
 }
