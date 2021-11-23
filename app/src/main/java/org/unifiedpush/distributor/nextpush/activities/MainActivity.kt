@@ -31,6 +31,7 @@ import org.unifiedpush.distributor.nextpush.account.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.ApiUtils
 import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.distributor.getDb
+import org.unifiedpush.distributor.nextpush.services.startListener
 import java.lang.String.format
 
 private const val TAG = "NextPush-MainActivity"
@@ -100,7 +101,7 @@ class MainActivity : AppCompatActivity() {
             format(getString(R.string.main_account_desc), ssoAccount.name)
         showLogout = true
         invalidateOptionsMenu()
-        startListener()
+        startListener(this)
     }
 
     private fun showStart() {
@@ -144,7 +145,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Restarting the Listener")
         val serviceIntent = Intent(this, StartService::class.java)
         this.stopService(serviceIntent)
-        startListener()
+        startListener(this)
     }
 
     private fun logout() {
@@ -166,16 +167,6 @@ class MainActivity : AppCompatActivity() {
         }
         alert.setNegativeButton(getString(R.string.discard)) { dialog, _ -> dialog.dismiss() }
         alert.show()
-    }
-
-    private fun startListener(){
-        Log.d(TAG, "Starting the Listener")
-        val serviceIntent = Intent(this, StartService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            this.startForegroundService(serviceIntent)
-        }else{
-            this.startService(serviceIntent)
-        }
     }
 
     private fun setListView(){

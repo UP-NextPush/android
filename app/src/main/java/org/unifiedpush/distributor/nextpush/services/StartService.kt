@@ -1,8 +1,5 @@
 package org.unifiedpush.distributor.nextpush.services
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -16,11 +13,20 @@ import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
 import com.nextcloud.android.sso.ui.UiExceptionManager
 
-import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.api.ApiUtils
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
 
 private const val TAG = "StartService"
+
+fun startListener(context: Context){
+    Log.d(TAG, "Starting the Listener")
+    val serviceIntent = Intent(context, StartService::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(serviceIntent)
+    }else{
+        context.startService(serviceIntent)
+    }
+}
 
 class StartService: Service(){
 
@@ -35,8 +41,8 @@ class StartService: Service(){
     override fun onCreate(){
         super.onCreate()
         Log.i(TAG,"Starting")
-        val notification = createNotification()
-        startForeground(51115, notification)
+        val notification = createForegroundNotification(this)
+        startForeground(NOTIF_ID_FOREGROUND, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -48,37 +54,6 @@ class StartService: Service(){
     override fun onDestroy() {
         api.destroy()
         super.onDestroy()
-    }
-
-    private fun createNotification(): Notification {
-        val appName = getString(R.string.app_name)
-        val notificationChannelId = "$appName.Listener"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;
-            val channel = NotificationChannel(
-                    notificationChannelId,
-                    appName,
-                    NotificationManager.IMPORTANCE_LOW
-            ).let {
-                it.description = getString(R.string.listening_notif_description)
-                it
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(
-                this,
-                notificationChannelId
-        ) else Notification.Builder(this)
-
-        return builder
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.listening_notif_description))
-                .setSmallIcon(R.drawable.ic_launcher_notification)
-                .setTicker("Listening")
-                .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
-                .build()
     }
 
     private fun startService() {
