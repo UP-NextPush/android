@@ -10,13 +10,16 @@ private const val DB_VERSION = 1
 
 class MessagingDatabase(context: Context):
     SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
-    private val CREATE_TABLE_APPS = "CREATE TABLE apps (" +
-            "package_name TEXT," +
-            "token TEXT," +
-            "PRIMARY KEY (token));"
     private val TABLE_APPS = "apps"
-    private val FIELD_PACKAGE_NAME = "package_name"
-    private val FIELD_TOKEN = "token"
+    private val FIELD_PACKAGE_NAME = "packageName"
+    private val FIELD_CONNECTOR_TOKEN = "connectorToken"
+    private val FIELD_APP_TOKEN = "appToken"
+    private val CREATE_TABLE_APPS = "CREATE TABLE apps (" +
+            "$FIELD_PACKAGE_NAME TEXT," +
+            "$FIELD_CONNECTOR_TOKEN TEXT," +
+            "$FIELD_APP_TOKEN TEXT," +
+            "PRIMARY KEY ($FIELD_CONNECTOR_TOKEN));"
+
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(CREATE_TABLE_APPS)
@@ -26,26 +29,27 @@ class MessagingDatabase(context: Context):
         throw IllegalStateException("Upgrades not supported")
     }
 
-    fun registerApp(packageName: String, token: String) {
+    fun registerApp(packageName: String, connectorToken: String, appToken: String) {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(FIELD_PACKAGE_NAME, packageName)
-            put(FIELD_TOKEN, token)
+            put(FIELD_CONNECTOR_TOKEN, connectorToken)
+            put(FIELD_APP_TOKEN, appToken)
         }
         db.insert(TABLE_APPS, null, values)
     }
 
-    fun unregisterApp(token: String) {
+    fun unregisterApp(connectorToken: String) {
         val db = writableDatabase
-        val selection = "$FIELD_TOKEN = ?"
-        val selectionArgs = arrayOf(token)
+        val selection = "$FIELD_CONNECTOR_TOKEN = ?"
+        val selectionArgs = arrayOf(connectorToken)
         db.delete(TABLE_APPS, selection, selectionArgs)
     }
 
-    fun isRegistered(packageName: String, token: String): Boolean {
+    fun isRegistered(packageName: String, connectorToken: String): Boolean {
         val db = readableDatabase
-        val selection = "$FIELD_PACKAGE_NAME = ? AND $FIELD_TOKEN = ?"
-        val selectionArgs = arrayOf(packageName, token)
+        val selection = "$FIELD_PACKAGE_NAME = ? AND $FIELD_CONNECTOR_TOKEN = ?"
+        val selectionArgs = arrayOf(packageName, connectorToken)
         return db.query(
                 TABLE_APPS,
                 null,
@@ -59,11 +63,11 @@ class MessagingDatabase(context: Context):
         }
     }
 
-    fun getPackageName(token: String): String {
+    fun getPackageName(connectorToken: String): String {
         val db = readableDatabase
         val projection = arrayOf(FIELD_PACKAGE_NAME)
-        val selection = "$FIELD_TOKEN = ?"
-        val selectionArgs = arrayOf(token)
+        val selection = "$FIELD_CONNECTOR_TOKEN = ?"
+        val selectionArgs = arrayOf(connectorToken)
         return db.query(
             TABLE_APPS,
             projection,
@@ -78,9 +82,28 @@ class MessagingDatabase(context: Context):
         }
     }
 
+    fun getAppToken(connectorToken: String): String {
+        val db = readableDatabase
+        val projection = arrayOf(FIELD_APP_TOKEN)
+        val selection = "$FIELD_CONNECTOR_TOKEN = ?"
+        val selectionArgs = arrayOf(connectorToken)
+        return db.query(
+            TABLE_APPS,
+            projection,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
+        ).use { cursor ->
+            val column = cursor.getColumnIndex(FIELD_APP_TOKEN)
+            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else ""
+        }
+    }
+
     fun listTokens(): List<String> {
         val db = readableDatabase
-        val projection = arrayOf(FIELD_TOKEN)
+        val projection = arrayOf(FIELD_CONNECTOR_TOKEN)
         return db.query(
             TABLE_APPS,
             projection,
@@ -92,7 +115,7 @@ class MessagingDatabase(context: Context):
         ).use{ cursor ->
             generateSequence { if (cursor.moveToNext()) cursor else null }
                 .mapNotNull{
-                    val column = cursor.getColumnIndex(FIELD_TOKEN)
+                    val column = cursor.getColumnIndex(FIELD_CONNECTOR_TOKEN)
                     if (column >= 0) it.getString(column) else null }
                 .toList()
         }

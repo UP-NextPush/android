@@ -3,10 +3,13 @@ package org.unifiedpush.distributor.nextpush.distributor
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import org.unifiedpush.distributor.nextpush.account.getUrl
 
 /**
  * These functions are used to send messages to other apps
  */
+
+private const val TAG = "DistributorUtils"
 
 fun sendMessage(context: Context, token: String, message: String){
     val application = getApp(context, token)
@@ -21,46 +24,46 @@ fun sendMessage(context: Context, token: String, message: String){
     context.sendBroadcast(broadcastIntent)
 }
 
-fun sendEndpoint(context: Context, token: String, endpoint: String) {
-    val application = getApp(context, token)
+fun sendEndpoint(context: Context, connectorToken: String) {
+    val application = getApp(context, connectorToken)
     if (application.isNullOrBlank()) {
         return
     }
     val broadcastIntent = Intent()
     broadcastIntent.`package` = application
     broadcastIntent.action = ACTION_NEW_ENDPOINT
-    broadcastIntent.putExtra(EXTRA_TOKEN, token)
-    broadcastIntent.putExtra(EXTRA_ENDPOINT, endpoint)
+    broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
+    broadcastIntent.putExtra(EXTRA_ENDPOINT, getEndpoint(context, connectorToken))
     context.sendBroadcast(broadcastIntent)
 }
 
-fun sendUnregistered(context: Context, token: String) {
-    val application = getApp(context, token)
+fun sendUnregistered(context: Context, connectorToken: String) {
+    val application = getApp(context, connectorToken)
     if (application.isNullOrBlank()) {
         return
     }
     val broadcastIntent = Intent()
     broadcastIntent.`package` = application
     broadcastIntent.action = ACTION_UNREGISTERED
-    broadcastIntent.putExtra(EXTRA_TOKEN, token)
+    broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
     context.sendBroadcast(broadcastIntent)
 }
 
-fun getApp(context: Context, token: String): String?{
+fun getApp(context: Context, connectorToken: String): String?{
     val db = MessagingDatabase(context)
-    val app = db.getPackageName(token)
+    val app = db.getPackageName(connectorToken)
     db.close()
     return if (app.isBlank()) {
-        Log.w("notifyClient", "No app found for $token")
+        Log.w(TAG, "No app found for $connectorToken")
         null
     } else {
         app
     }
 }
 
-fun getEndpoint(context: Context, appToken: String): String {
-    val settings = context.getSharedPreferences("Config", Context.MODE_PRIVATE)
-    val address = settings?.getString("address","")
-    return settings?.getString("proxy","") +
-            "/foo/$appToken/"
+fun getEndpoint(context: Context, connectorToken: String): String {
+    val db = MessagingDatabase(context)
+    val appToken = db.getAppToken(connectorToken)
+    db.close()
+    return "${getUrl(context)}/push/$appToken"
 }

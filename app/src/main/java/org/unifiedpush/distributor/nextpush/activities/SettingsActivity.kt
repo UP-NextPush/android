@@ -40,7 +40,7 @@ class SettingsActivity : AppCompatActivity() {
         val tokenList = db.listTokens()
         db.close()
         tokenList.forEach {
-            sendEndpoint(this, it, getEndpoint(this, it))
+            sendEndpoint(this, it)
         }
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)

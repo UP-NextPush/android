@@ -16,6 +16,7 @@ private const val TAG = "AccountUtils"
 
 const val PREF_NAME = "NextPush"
 const val PREF_DEVICE_ID = "deviceId"
+const val PREF_URL = "url"
 
 lateinit var ssoAccount: SingleSignOnAccount
 
@@ -57,5 +58,24 @@ fun removeDeviceId(context: Context) {
     context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         .edit()
         .remove(PREF_DEVICE_ID)
+        .commit()
+}
+
+fun saveUrl(context: Context, url: String) {
+    context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(PREF_URL, url)
+        .commit()
+}
+
+fun getUrl(context: Context) : String? {
+    return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        .getString(PREF_URL,null)
+}
+
+fun removeUrl(context: Context) {
+    context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .remove(PREF_URL)
         .commit()
 }

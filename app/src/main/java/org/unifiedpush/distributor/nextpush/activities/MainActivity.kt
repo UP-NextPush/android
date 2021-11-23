@@ -33,7 +33,7 @@ import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.distributor.MessagingDatabase
 import java.lang.String.format
 
-const val TAG = "NextPush-MainActivity"
+private const val TAG = "NextPush-MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
@@ -203,10 +203,15 @@ class MainActivity : AppCompatActivity() {
                     alert.setTitle("Unregistering")
                     alert.setMessage("Are you sure to unregister ${appList[position]} ?")
                     alert.setPositiveButton("YES") { dialog, _ ->
-                        sendUnregistered(this, tokenList[position])
+                        val connectorToken = tokenList[position]
+                        sendUnregistered(this, connectorToken)
                         val db = MessagingDatabase(this)
-                        db.unregisterApp(tokenList[position])
+                        val appToken = db.getAppToken(connectorToken)
+                        db.unregisterApp(connectorToken)
                         db.close()
+                        ApiUtils().deleteApp(this, appToken) {
+                            Log.d(TAG,"Unregistration is finished")
+                        }
                         tokenList.removeAt(position)
                         appList.removeAt(position)
                         dialog.dismiss()

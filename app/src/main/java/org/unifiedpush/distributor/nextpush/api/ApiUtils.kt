@@ -12,11 +12,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
-import org.unifiedpush.distributor.nextpush.account.getDeviceId
-import org.unifiedpush.distributor.nextpush.account.removeDeviceId
-import org.unifiedpush.distributor.nextpush.account.saveDeviceId
-import org.unifiedpush.distributor.nextpush.account.ssoAccount
+import org.unifiedpush.distributor.nextpush.account.*
 import org.unifiedpush.distributor.nextpush.api.ProviderApi.Companion.mApiEndpoint
+import org.unifiedpush.distributor.nextpush.distributor.MessagingDatabase
 import org.unifiedpush.distributor.nextpush.services.SSEListener
 import retrofit2.NextcloudRetrofitApiBuilder
 import java.util.concurrent.TimeUnit
@@ -83,6 +81,7 @@ class ApiUtils {
                     }
 
                     override fun onComplete() {
+                        saveUrl(context, "${ssoAccount.url}${mApiEndpoint}")
                         // Sync once it is registered
                         cSync(deviceId!!)
                         Log.d(TAG, "mApi register: onComplete")
@@ -131,7 +130,7 @@ class ApiUtils {
                     if (response.success) {
                         Log.d(TAG, "Device successfully deleted.")
                     } else {
-                        Log.d(TAG, "An error occurred while deleting the device registration.")
+                        Log.d(TAG, "An error occurred while deleting the device.")
                     }
                 }
 
@@ -140,24 +139,98 @@ class ApiUtils {
                 }
 
                 override fun onComplete() {
+                    removeUrl(context)
                 }
             })
         removeDeviceId(context)
     }
 
-    fun createApp(context: Context) {
-        cApi(context) { cCreateApp(context) }
+    fun createApp(context: Context,
+                  appName: String,
+                  connectorToken: String,
+                  callback: ()->Unit) {
+        cApi(context) {
+            cCreateApp(context, appName, connectorToken) {
+                callback()
+            }
+        }
     }
 
-    private fun cCreateApp(context: Context) {
+    private fun cCreateApp(context: Context,
+                           appName: String,
+                           connectorToken: String,
+                           callback: ()->Unit) {
+        val db = MessagingDatabase(context)
+        if (db.isRegistered(appName, connectorToken)) {
+            Log.i("RegisterService","$appName already registered")
+            db.close()
+            callback()
+            return
+        }
+        val parameters = mutableMapOf(
+            "deviceId" to getDeviceId(context)!!,
+            "appName" to appName
+        )
+        mApi.createApp(parameters)
+            ?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(Schedulers.newThread())
+            ?.subscribe(object : Observer<ApiResponse?> {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "Subscribed to createApp.")
+                }
 
+                override fun onNext(response: ApiResponse) {
+                    if (response.success) {
+                        Log.d(TAG, "App successfully created.")
+                        db.registerApp(appName, connectorToken, response.token)
+                    } else {
+                        Log.d(TAG, "An error occurred while creating the application.")
+                    }
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+                override fun onComplete() {
+                    db.close()
+                    callback()
+                }
+            })
     }
 
-    fun deleteApp(context: Context) {
-        cApi(context) { cDeleteApp(context) }
+    fun deleteApp(context: Context, appToken: String, callback: ()->Unit) {
+        cApi(context) {
+            cDeleteApp(appToken) {
+                callback()
+            }
+        }
     }
 
-    private fun cDeleteApp(context: Context) {
+    private fun cDeleteApp(appToken: String, callback: ()->Unit) {
+        mApi.deleteApp(appToken)
+            ?.subscribeOn(Schedulers.newThread())
+            ?.observeOn(Schedulers.newThread())
+            ?.subscribe(object : Observer<ApiResponse?> {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "Subscribed to deleteApp.")
+                }
 
+                override fun onNext(response: ApiResponse) {
+                    if (response.success) {
+                        Log.d(TAG, "App successfully deleted.")
+                    } else {
+                        Log.d(TAG, "An error occurred while deleting the application.")
+                    }
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+                override fun onComplete() {
+                    callback()
+                }
+            })
     }
 }
