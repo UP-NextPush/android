@@ -4,14 +4,6 @@
     <!-- Strings used on the main page -->
     <string name="main_applications_title">Registered applications</string>
 
-    <!-- Strings used for configuration -->
-    <string name="settings_address_label">Your address</string>
-    <string name="settings_address_information">This is your static address on your custom network. It is necessary to know where to forward the notifications.</string>
-    <string name="settings_address_hint">[::1]</string>
-    <string name="settings_gateway_label">Your proxy</string>
-    <string name="settings_gateway_information">This is the proxy to forward requests inside your custom network, to reach your phone from the Internet.</string>
-    <string name="settings_gateway_hint">https://proxy.example.tld</string>
-    <string name="settings_save_button">Save</string>
     <string name="help"></string>
     <string name="listening_notif_description">Listening incoming notifications</string>
     <string name="connection_button">Login</string>
