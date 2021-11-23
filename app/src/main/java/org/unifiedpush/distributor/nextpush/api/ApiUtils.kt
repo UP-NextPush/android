@@ -22,6 +22,9 @@ import java.util.concurrent.TimeUnit
 
 private const val TAG = "ApiUtils"
 
+val createQueue = emptyList<String>().toMutableList()
+val delQueue = emptyList<String>().toMutableList()
+
 class ApiUtils {
     private lateinit var mApi: ProviderApi
     private lateinit var nextcloudAPI: NextcloudAPI
@@ -187,6 +190,11 @@ class ApiUtils {
                 override fun onNext(response: ApiResponse) {
                     if (response.success) {
                         Log.d(TAG, "App successfully created.")
+                        /**
+                         * Ignore printed error for SQLiteContstraintException.
+                         * It is printed and not thrown by SQLiteDatabase.java
+                         * So we can't catch it
+                         */
                         db.registerApp(appName, connectorToken, response.token)
                     } else {
                         Log.d(TAG, "An error occurred while creating the application.")
@@ -194,24 +202,27 @@ class ApiUtils {
                 }
 
                 override fun onError(e: Throwable) {
+                    createQueue.remove(connectorToken)
                     e.printStackTrace()
                 }
 
                 override fun onComplete() {
+                    createQueue.remove(connectorToken)
                     callback()
                 }
             })
     }
 
-    fun deleteApp(context: Context, appToken: String, callback: ()->Unit) {
+    fun deleteApp(context: Context, connectorToken: String, callback: ()->Unit) {
         cApi(context) {
-            cDeleteApp(appToken) {
+            cDeleteApp(context, connectorToken) {
                 callback()
             }
         }
     }
 
-    private fun cDeleteApp(appToken: String, callback: ()->Unit) {
+    private fun cDeleteApp(context: Context, connectorToken: String, callback: ()->Unit) {
+        val appToken = getDb(context).getAppToken(connectorToken)
         mApi.deleteApp(appToken)
             ?.subscribeOn(Schedulers.newThread())
             ?.observeOn(Schedulers.newThread())
@@ -229,10 +240,12 @@ class ApiUtils {
                 }
 
                 override fun onError(e: Throwable) {
+                    delQueue.remove(connectorToken)
                     e.printStackTrace()
                 }
 
                 override fun onComplete() {
+                    delQueue.remove(connectorToken)
                     callback()
                 }
             })

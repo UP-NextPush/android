@@ -6,6 +6,8 @@ import android.content.Intent
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.distributor.*
 import org.unifiedpush.distributor.nextpush.api.ApiUtils
+import org.unifiedpush.distributor.nextpush.api.createQueue
+import org.unifiedpush.distributor.nextpush.api.delQueue
 
 /**
  * THIS SERVICE IS USED BY OTHER APPS TO REGISTER
@@ -25,8 +27,17 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     Log.w(TAG,"Trying to register an app without packageName")
                     return
                 }
-                ApiUtils().createApp(context!!.applicationContext, application, connectorToken) {
-                    sendEndpoint(context.applicationContext, connectorToken)
+                if (connectorToken !in createQueue) {
+                    createQueue.add(connectorToken)
+                    ApiUtils().createApp(
+                        context!!.applicationContext,
+                        application,
+                        connectorToken
+                    ) {
+                        sendEndpoint(context.applicationContext, connectorToken)
+                    }
+                } else {
+                    Log.d(TAG, "Already registering $connectorToken")
                 }
             }
             ACTION_UNREGISTER ->{
@@ -36,12 +47,16 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                 if (application.isBlank()) {
                     return
                 }
-                sendUnregistered(context!!.applicationContext, connectorToken)
-                val db = getDb(context.applicationContext)
-                val appToken = db.getAppToken(connectorToken)
-                db.unregisterApp(connectorToken)
-                ApiUtils().deleteApp(context.applicationContext, appToken) {
-                    Log.d(TAG,"Unregistration is finished")
+                if (connectorToken !in delQueue) {
+                    delQueue.add(connectorToken)
+                    sendUnregistered(context!!.applicationContext, connectorToken)
+                    ApiUtils().deleteApp(context.applicationContext, connectorToken) {
+                        val db = getDb(context.applicationContext)
+                        db.unregisterApp(connectorToken)
+                        Log.d(TAG, "Unregistration is finished")
+                    }
+                } else {
+                    Log.d(TAG, "Already deleting $connectorToken")
                 }
             }
         }
