@@ -83,19 +83,19 @@ class ApiUtils {
                     override fun onComplete() {
                         saveUrl(context, "${ssoAccount.url}${mApiEndpoint}")
                         // Sync once it is registered
-                        cSync(deviceId!!)
+                        cSync(context, deviceId!!)
                         Log.d(TAG, "mApi register: onComplete")
                     }
                 })
         } else {
             // Sync directly
             Log.d(TAG, "Found deviceId: $deviceId")
-            cSync(deviceId!!)
+            cSync(context, deviceId!!)
         }
     }
 
 
-    private fun cSync(deviceId: String) {
+    private fun cSync(context: Context, deviceId: String) {
         val client = OkHttpClient.Builder()
             .readTimeout(0, TimeUnit.SECONDS)
             .retryOnConnectionFailure(false)
@@ -107,7 +107,7 @@ class ApiUtils {
             .build()
 
         factory = EventSources.createFactory(client)
-        factory.newEventSource(request, SSEListener())
+        factory.newEventSource(request, SSEListener(context))
         Log.d(TAG, "doConnect done.")
     }
 

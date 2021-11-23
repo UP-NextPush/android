@@ -101,6 +101,25 @@ class MessagingDatabase(context: Context):
         }
     }
 
+    fun getConnectorToken(appToken: String): String {
+        val db = readableDatabase
+        val projection = arrayOf(FIELD_CONNECTOR_TOKEN)
+        val selection = "$FIELD_APP_TOKEN = ?"
+        val selectionArgs = arrayOf(appToken)
+        return db.query(
+            TABLE_APPS,
+            projection,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
+        ).use { cursor ->
+            val column = cursor.getColumnIndex(FIELD_CONNECTOR_TOKEN)
+            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else ""
+        }
+    }
+
     fun listTokens(): List<String> {
         val db = readableDatabase
         val projection = arrayOf(FIELD_CONNECTOR_TOKEN)

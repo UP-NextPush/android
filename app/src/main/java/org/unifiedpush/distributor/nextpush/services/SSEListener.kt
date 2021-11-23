@@ -1,14 +1,19 @@
 package org.unifiedpush.distributor.nextpush.services
 
+import android.content.Context
+import android.util.Base64
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSource
 import android.util.Log
 import okhttp3.Response
 import java.lang.Exception
+import com.google.gson.Gson
+import org.unifiedpush.distributor.nextpush.api.SSEResponse
+import org.unifiedpush.distributor.nextpush.distributor.sendMessage
 
 private const val TAG = "SSEListener"
 
-class SSEListener : EventSourceListener() {
+class SSEListener (val context: Context) : EventSourceListener() {
     private var pingtime = 0.toLong()
     private val networkConnected = false
 
@@ -31,9 +36,15 @@ class SSEListener : EventSourceListener() {
         if (eventType == "ping") {
             Log.d(TAG, "SSE ping received.")
         }
-        if (eventType != "notification") return
+        if (eventType != "message") return
         Log.d(TAG, "Notification event received.")
         // handle notification
+        val message = Gson().fromJson(data, SSEResponse::class.java)
+        if ( message.type == "message" ) {
+            sendMessage(context,
+                message.token,
+                String(Base64.decode(message.message,Base64.DEFAULT)))
+        }
     }
 
     override fun onClosed(eventSource: EventSource) {

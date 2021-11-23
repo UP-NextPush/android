@@ -11,15 +11,17 @@ import org.unifiedpush.distributor.nextpush.account.getUrl
 
 private const val TAG = "DistributorUtils"
 
-fun sendMessage(context: Context, token: String, message: String){
-    val application = getApp(context, token)
+fun sendMessage(context: Context, appToken: String, message: String) {
+    val db = MessagingDatabase(context)
+    val connectorToken = db.getConnectorToken(appToken)
+    val application = getApp(context, connectorToken, db)
     if (application.isNullOrBlank()) {
         return
     }
     val broadcastIntent = Intent()
     broadcastIntent.`package` = application
     broadcastIntent.action = ACTION_MESSAGE
-    broadcastIntent.putExtra(EXTRA_TOKEN, token)
+    broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
     broadcastIntent.putExtra(EXTRA_MESSAGE, message)
     context.sendBroadcast(broadcastIntent)
 }
@@ -49,8 +51,10 @@ fun sendUnregistered(context: Context, connectorToken: String) {
     context.sendBroadcast(broadcastIntent)
 }
 
-fun getApp(context: Context, connectorToken: String): String?{
-    val db = MessagingDatabase(context)
+fun getApp(context: Context,
+           connectorToken: String,
+           db: MessagingDatabase = MessagingDatabase(context)
+): String?{
     val app = db.getPackageName(connectorToken)
     db.close()
     return if (app.isBlank()) {
