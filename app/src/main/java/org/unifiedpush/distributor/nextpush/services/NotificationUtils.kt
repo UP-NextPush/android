@@ -12,7 +12,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import org.unifiedpush.distributor.nextpush.activities.MainActivity
 
-
 const val NOTIF_ID_FOREGROUND = 51115
 const val NOTIF_ID_WARNING = 51215
 
@@ -54,6 +53,7 @@ fun createForegroundNotification(context: Context): Notification {
         .setTicker(context.getString(R.string.listening_notif_ticker))
         .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
         .setContentIntent(intent)
+        .setOngoing(true)
         .build()
 }
 
@@ -96,6 +96,7 @@ fun createWarningNotification(context: Context) {
         .setTicker(context.getString(R.string.warning_notif_ticker))
         .setPriority(Notification.PRIORITY_HIGH) // for under android 26 compatibility
         .setContentIntent(intent)
+        .setOngoing(true)
 
     with(NotificationManagerCompat.from(context)) {
         notify(NOTIF_ID_WARNING, builder.build())
