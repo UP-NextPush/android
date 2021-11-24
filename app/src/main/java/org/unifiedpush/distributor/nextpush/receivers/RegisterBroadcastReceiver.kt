@@ -43,13 +43,13 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
             ACTION_UNREGISTER ->{
                 Log.i(TAG,"UNREGISTER")
                 val connectorToken = intent.getStringExtra(EXTRA_TOKEN)?: ""
-                val application = intent.getStringExtra(EXTRA_APPLICATION)?: return
+                val application = getDb(context!!).getPackageName(connectorToken)
                 if (application.isBlank()) {
                     return
                 }
                 if (connectorToken !in delQueue) {
                     delQueue.add(connectorToken)
-                    sendUnregistered(context!!.applicationContext, connectorToken)
+                    sendUnregistered(context.applicationContext, connectorToken)
                     ApiUtils().deleteApp(context.applicationContext, connectorToken) {
                         val db = getDb(context.applicationContext)
                         db.unregisterApp(connectorToken)

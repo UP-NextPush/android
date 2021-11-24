@@ -16,7 +16,15 @@ import com.nextcloud.android.sso.ui.UiExceptionManager
 import org.unifiedpush.distributor.nextpush.api.ApiUtils
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
 
+import android.net.Network
+
+import android.net.ConnectivityManager
+import android.net.ConnectivityManager.NetworkCallback
+import java.lang.Exception
+
+
 private const val TAG = "StartService"
+var isServiceStarted = false
 
 fun startListener(context: Context){
     Log.d(TAG, "Starting the Listener")
@@ -30,7 +38,6 @@ fun startListener(context: Context){
 
 class StartService: Service(){
 
-    private var isServiceStarted = false
     private var wakeLock: PowerManager.WakeLock? = null
     private var api = ApiUtils()
 
@@ -46,6 +53,7 @@ class StartService: Service(){
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        registerNetworkCallback()
         startService()
         // by returning this we make sure the service is restarted if the system kills the service
         return START_STICKY
@@ -77,5 +85,25 @@ class StartService: Service(){
 
         api.sync(this)
     }
+
+    private fun registerNetworkCallback() {
+        try {
+            val connectivityManager =
+                this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            connectivityManager.registerDefaultNetworkCallback(object : NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    Log.d(TAG, "Network is CONNECTED")
+                    startService()
+                }
+
+                override fun onLost(network: Network) {
+                    Log.d(TAG, "Network is DISCONNECTED")
+                }
+            })
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
 }
 

@@ -33,6 +33,15 @@ fun createForegroundNotification(context: Context): Notification {
         notificationManager.createNotificationChannel(channel)
     }
 
+    val notificationIntent = Intent(context, MainActivity::class.java)
+
+    notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+    val intent = PendingIntent.getActivity(
+        context, 0,
+        notificationIntent, 0
+    )
+
     val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(
         context,
         notificationChannelId
@@ -44,6 +53,7 @@ fun createForegroundNotification(context: Context): Notification {
         .setSmallIcon(R.drawable.ic_launcher_notification)
         .setTicker(context.getString(R.string.listening_notif_ticker))
         .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
+        .setContentIntent(intent)
         .build()
 }
 
@@ -65,7 +75,7 @@ fun createWarningNotification(context: Context) {
         notificationManager.createNotificationChannel(channel)
     }
 
-    val notificationIntent: Intent = Intent(context, MainActivity::class.java)
+    val notificationIntent = Intent(context, MainActivity::class.java)
 
     notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
