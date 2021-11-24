@@ -16,8 +16,11 @@ import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 private const val TAG = "SSEListener"
 
 class SSEListener (val context: Context) : EventSourceListener() {
+    private var failed = false
+
     override fun onOpen(eventSource: EventSource, response: Response) {
         deleteWarningNotification(context)
+        failed = false
         try {
             Log.d(TAG, "onOpen: " + response.code)
         } catch (e: Exception) {
@@ -59,8 +62,13 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+        Log.d(TAG, "onFailure")
         isServiceStarted = false
         createWarningNotification(context)
+        if (!failed) {
+            failed = true
+            startListener(context)
+        }
         t?.let {
             Log.d(TAG, "An error occurred: $t")
             return
