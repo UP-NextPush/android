@@ -1,7 +1,6 @@
 package org.unifiedpush.distributor.nextpush.activities
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -28,7 +27,8 @@ import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.isConnected
 import org.unifiedpush.distributor.nextpush.account.connect
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
-import org.unifiedpush.distributor.nextpush.api.ApiUtils
+import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.api.apiDeleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.distributor.getDb
 import org.unifiedpush.distributor.nextpush.services.startListener
@@ -160,7 +160,7 @@ class MainActivity : AppCompatActivity() {
                 .edit()
                 .remove("PREF_CURRENT_ACCOUNT_STRING")
                 .apply()
-            ApiUtils().deleteDevice(this)
+            apiDeleteDevice(this)
             showStart()
             finish();
             startActivity(intent);
@@ -194,7 +194,7 @@ class MainActivity : AppCompatActivity() {
                         val db = getDb(this)
                         val appToken = db.getAppToken(connectorToken)
                         db.unregisterApp(connectorToken)
-                        ApiUtils().deleteApp(this, appToken) {
+                        apiDeleteApp(this, appToken) {
                             Log.d(TAG,"Unregistration is finished")
                         }
                         tokenList.removeAt(position)

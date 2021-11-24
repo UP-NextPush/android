@@ -13,13 +13,14 @@ import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
 import com.nextcloud.android.sso.ui.UiExceptionManager
 
-import org.unifiedpush.distributor.nextpush.api.ApiUtils
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
 
 import android.net.Network
 
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
+import org.unifiedpush.distributor.nextpush.api.apiDestroy
+import org.unifiedpush.distributor.nextpush.api.apiSync
 import java.lang.Exception
 
 
@@ -39,7 +40,6 @@ fun startListener(context: Context){
 class StartService: Service(){
 
     private var wakeLock: PowerManager.WakeLock? = null
-    private var api = ApiUtils()
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -60,7 +60,7 @@ class StartService: Service(){
     }
 
     override fun onDestroy() {
-        api.destroy()
+        apiDestroy()
         super.onDestroy()
     }
 
@@ -83,7 +83,7 @@ class StartService: Service(){
             }
         }
 
-        api.sync(this)
+        apiSync(this)
     }
 
     private fun registerNetworkCallback() {
