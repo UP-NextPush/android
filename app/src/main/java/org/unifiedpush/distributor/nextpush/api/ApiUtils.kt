@@ -29,10 +29,13 @@ val delQueue = emptyList<String>().toMutableList()
 private lateinit var mApi: ProviderApi
 private lateinit var nextcloudAPI: NextcloudAPI
 private lateinit var factory: EventSource.Factory
+private lateinit var source: EventSource
 
 fun apiDestroy() {
     if (::nextcloudAPI.isInitialized)
         nextcloudAPI.stop()
+    if (::source.isInitialized)
+        source.cancel()
 }
 
 private fun cApi(context: Context, callback: ()->Unit) {
@@ -111,7 +114,7 @@ private fun cSync(context: Context, deviceId: String) {
         .build()
 
     factory = EventSources.createFactory(client)
-    factory.newEventSource(request, SSEListener(context))
+    source = factory.newEventSource(request, SSEListener(context))
     Log.d(TAG, "cSync done.")
 }
 
