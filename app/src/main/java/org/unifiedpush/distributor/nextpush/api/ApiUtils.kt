@@ -175,6 +175,7 @@ private fun cCreateApp(context: Context,
     val db = getDb(context)
     if (db.isRegistered(appName, connectorToken)) {
         Log.i("RegisterService","$appName already registered")
+        createQueue.remove(connectorToken)
         callback()
         return
     }
