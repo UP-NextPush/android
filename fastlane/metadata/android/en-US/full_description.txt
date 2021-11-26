@@ -1,0 +1,3 @@
+This application is a UnifiedPush distributor that works with the Nextcloud application associated (https://github.com/UP-NextPush/server-app).
+
+More information about UnifiedPush at https://unifiedpush.org .
