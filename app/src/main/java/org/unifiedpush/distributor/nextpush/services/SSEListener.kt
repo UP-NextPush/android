@@ -1,6 +1,8 @@
 package org.unifiedpush.distributor.nextpush.services
 
 import android.content.Context
+import android.os.CountDownTimer
+import android.os.Looper
 import android.util.Base64
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSource
@@ -16,7 +18,6 @@ import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 private const val TAG = "SSEListener"
 
 class SSEListener (val context: Context) : EventSourceListener() {
-    private var failed = false
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         deleteWarningNotification(context)
@@ -67,7 +68,19 @@ class SSEListener (val context: Context) : EventSourceListener() {
         createWarningNotification(context)
         if (!failed) {
             failed = true
-            startListener(context)
+            Looper.prepare()
+            object : CountDownTimer(2000, 1000) {
+
+                override fun onTick(millisUntilFinished: Long) {
+                    Log.d(TAG, "Restarting in $millisUntilFinished ms")
+                }
+
+                override fun onFinish() {
+                    Log.d(TAG, "Trying to restart")
+                    startListener(context)
+                }
+            }.start()
+            Looper.loop()
         }
         t?.let {
             Log.d(TAG, "An error occurred: $t")

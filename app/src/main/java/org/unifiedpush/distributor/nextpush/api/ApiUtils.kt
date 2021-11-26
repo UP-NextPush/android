@@ -112,7 +112,7 @@ private fun cSync(context: Context, deviceId: String) {
 
     factory = EventSources.createFactory(client)
     factory.newEventSource(request, SSEListener(context))
-    Log.d(TAG, "doConnect done.")
+    Log.d(TAG, "cSync done.")
 }
 
 fun apiDeleteDevice(context: Context) {

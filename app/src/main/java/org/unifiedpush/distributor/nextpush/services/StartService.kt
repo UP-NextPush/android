@@ -26,6 +26,7 @@ import java.lang.Exception
 
 private const val TAG = "StartService"
 var isServiceStarted = false
+var failed = false
 
 fun startListener(context: Context){
     Log.d(TAG, "Starting the Listener")
@@ -60,6 +61,7 @@ class StartService: Service(){
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "Destroyed")
         apiDestroy()
         super.onDestroy()
     }
