@@ -15,6 +15,8 @@ import org.unifiedpush.distributor.nextpush.activities.MainActivity
 const val NOTIF_ID_FOREGROUND = 51115
 const val NOTIF_ID_WARNING = 51215
 
+private var warningShown = false
+
 fun createForegroundNotification(context: Context): Notification {
     val appName = context.getString(R.string.app_name)
     val notificationChannelId = "$appName.Listener"
@@ -58,6 +60,8 @@ fun createForegroundNotification(context: Context): Notification {
 }
 
 fun createWarningNotification(context: Context) {
+    if (warningShown)
+        return
     val appName = context.getString(R.string.app_name)
     val notificationChannelId = "$appName.Warning"
 
@@ -101,9 +105,11 @@ fun createWarningNotification(context: Context) {
     with(NotificationManagerCompat.from(context)) {
         notify(NOTIF_ID_WARNING, builder.build())
     }
+    warningShown = true
 }
 
 fun deleteWarningNotification(context: Context) {
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;
     notificationManager.cancel(NOTIF_ID_WARNING)
+    warningShown = false
 }
