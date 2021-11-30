@@ -23,7 +23,6 @@ import org.unifiedpush.distributor.nextpush.api.apiDestroy
 import org.unifiedpush.distributor.nextpush.api.apiSync
 import java.lang.Exception
 
-
 private const val TAG = "StartService"
 var isServiceStarted = false
 var failed = false
@@ -41,6 +40,7 @@ fun startListener(context: Context){
 class StartService: Service(){
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private var isCallbackRegistered = false
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -54,7 +54,10 @@ class StartService: Service(){
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        registerNetworkCallback()
+        if (!isCallbackRegistered) {
+            isCallbackRegistered = true
+            registerNetworkCallback()
+        }
         startService()
         // by returning this we make sure the service is restarted if the system kills the service
         return START_STICKY
