@@ -1,0 +1,4 @@
+* Retry every 10min on failure
+* Register only one network callback
+* Do not re-notify warning
+
