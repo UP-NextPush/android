@@ -66,22 +66,25 @@ class SSEListener (val context: Context) : EventSourceListener() {
         Log.d(TAG, "onFailure")
         isServiceStarted = false
         createWarningNotification(context)
-        if (!failed) {
-            failed = true
-            Looper.prepare()
-            object : CountDownTimer(2000, 1000) {
+        val timeStop = if (!failed) {
+            2000
+        } else {
+            60000
+        }.toLong()
+        Log.d(TAG, "Retrying in $timeStop ms")
+        failed = true
+        Looper.prepare()
+        object : CountDownTimer(timeStop, timeStop) {
 
-                override fun onTick(millisUntilFinished: Long) {
-                    Log.d(TAG, "Restarting in $millisUntilFinished ms")
-                }
+            override fun onTick(millisUntilFinished: Long) {}
 
-                override fun onFinish() {
-                    Log.d(TAG, "Trying to restart")
-                    startListener(context)
-                }
-            }.start()
-            Looper.loop()
-        }
+            override fun onFinish() {
+                Log.d(TAG, "Trying to restart")
+                startListener(context)
+            }
+
+        }.start()
+        Looper.loop()
         t?.let {
             Log.d(TAG, "An error occurred: $t")
             return
