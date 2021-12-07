@@ -73,7 +73,7 @@ dependencies {
     implementation("com.google.android.material:material:1.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.2")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.1.0")
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.9.1"))
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.9.3"))
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:okhttp-sse")
     implementation("com.github.nextcloud:Android-SingleSignOn:0.6.0")
