@@ -29,9 +29,9 @@ class SSEListener (val context: Context) : EventSourceListener() {
         }
     }
 
-    override fun onEvent(eventSource: EventSource, id: String?, eventType: String?, data: String) {
-        Log.d(TAG, "New SSE message event=$eventType message=$data")
-        when (eventType) {
+    override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
+        Log.d(TAG, "New SSE message event=$type message=$data")
+        when (type) {
             "warning" -> Log.d(TAG, "Warning event received.")
             "ping" -> Log.d(TAG, "SSE ping received.")
             "message" -> {
