@@ -1,3 +1,5 @@
 This application is a UnifiedPush distributor that works with the Nextcloud application associated (https://github.com/UP-NextPush/server-app).
 
+It requires the Nextcloud App to work : https://f-droid.org/packages/com.nextcloud.client/
+
 More information about UnifiedPush at https://unifiedpush.org .
