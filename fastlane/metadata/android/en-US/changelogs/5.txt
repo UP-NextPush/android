@@ -1,0 +1,3 @@
+* First major release
+* Open market app if Nextcloud App isn't installed
+* Increase wait time with failures
