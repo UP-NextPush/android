@@ -19,4 +19,11 @@
     <string name="warning_notif_description">NextPush is disconnected</string>
     <string name="warning_notif_ticker">Warning</string>
     <string name="listening_notif_ticker">Listening</string>
+    <string name="message_missing_nextcloud_app">Nextcloud Files is not installed on your device.\nPlease install it</string>
+    <string name="uri_market_nextcloud_app">market://details?id=com.nextcloud.client</string>
+    <string name="market_chooser_title">Market</string>
+    <string name="install">Install</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="uri_fdroid_nextcloud_app">https://f-droid.org/repository/browse/?fdid=com.nextcloud.client</string>
+    <string name="nextcloud_files_not_found_title">Nextcloud Files not found</string>
 </resources>

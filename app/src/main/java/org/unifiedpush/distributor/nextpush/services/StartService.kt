@@ -11,9 +11,9 @@ import android.util.Log
 import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
 import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
-import com.nextcloud.android.sso.ui.UiExceptionManager
 
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
+import org.unifiedpush.distributor.nextpush.account.nextcloudAppNotInstalledDialog
 
 import android.net.Network
 
@@ -76,7 +76,7 @@ class StartService: Service(){
         try {
             ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(this)
         } catch (e: NextcloudFilesAppAccountNotFoundException) {
-            UiExceptionManager.showDialogForException(this, e)
+            nextcloudAppNotInstalledDialog(this)
         } catch (e: NoCurrentAccountSelectedException) {
             return
         }

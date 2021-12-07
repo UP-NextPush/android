@@ -26,6 +26,7 @@ import com.nextcloud.android.sso.exceptions.*
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.isConnected
 import org.unifiedpush.distributor.nextpush.account.connect
+import org.unifiedpush.distributor.nextpush.account.nextcloudAppNotInstalledDialog
 import org.unifiedpush.distributor.nextpush.account.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
 import org.unifiedpush.distributor.nextpush.api.apiDeleteDevice
@@ -83,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                         try {
                             ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
                         } catch (e: NextcloudFilesAppAccountNotFoundException) {
-                            UiExceptionManager.showDialogForException(context, e)
+                            nextcloudAppNotInstalledDialog(context)
                         } catch (e: NoCurrentAccountSelectedException) {
                             UiExceptionManager.showDialogForException(context, e)
                         }
