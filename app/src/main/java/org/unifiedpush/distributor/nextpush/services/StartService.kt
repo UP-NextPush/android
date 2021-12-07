@@ -25,7 +25,7 @@ import java.lang.Exception
 
 private const val TAG = "StartService"
 var isServiceStarted = false
-var failed = false
+var nFails = 0
 
 fun startListener(context: Context){
     Log.d(TAG, "Starting the Listener")

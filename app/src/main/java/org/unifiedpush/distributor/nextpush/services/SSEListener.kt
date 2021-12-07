@@ -21,7 +21,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         deleteWarningNotification(context)
-        failed = false
+        nFails = 0
         try {
             Log.d(TAG, "onOpen: " + response.code)
         } catch (e: Exception) {
@@ -65,14 +65,18 @@ class SSEListener (val context: Context) : EventSourceListener() {
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
         Log.d(TAG, "onFailure")
         isServiceStarted = false
-        createWarningNotification(context)
-        val timeStop = if (!failed) {
-            2000
-        } else {
-            60000
+        nFails += 1
+        if (nFails > 1)
+            createWarningNotification(context)
+        val timeStop = when (nFails) {
+            1 -> 2000          // 2sec
+            2 -> 20000         // 20sec
+            3 -> 60000         // 1min
+            4 -> 300000        // 5min
+            5 -> 600000        // 10min
+            else -> 1800000    // 30min
         }.toLong()
         Log.d(TAG, "Retrying in $timeStop ms")
-        failed = true
         Looper.prepare()
         object : CountDownTimer(timeStop, timeStop) {
 
