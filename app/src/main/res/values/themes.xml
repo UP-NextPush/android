@@ -21,5 +21,5 @@
 
     <style name="Theme.NextPush.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.NextPush.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.NextPush.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight" />
 </resources>
