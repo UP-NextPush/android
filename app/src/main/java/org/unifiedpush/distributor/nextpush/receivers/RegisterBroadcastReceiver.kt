@@ -23,9 +23,7 @@ private const val TAG = "RegisterBroadcastReceiver"
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        wakeLock?.let {
-            it.acquire()
-        }
+        wakeLock?.acquire(10000L /*10 secs*/)
         when (intent!!.action) {
             ACTION_REGISTER ->{
                 Log.i(TAG,"REGISTER")
