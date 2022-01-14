@@ -24,8 +24,10 @@ import org.unifiedpush.distributor.nextpush.api.apiSync
 import java.lang.Exception
 
 private const val TAG = "StartService"
+const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
 var isServiceStarted = false
 var nFails = 0
+var wakeLock: PowerManager.WakeLock? = null
 
 fun startListener(context: Context){
     Log.d(TAG, "Starting the Listener")
@@ -39,7 +41,6 @@ fun startListener(context: Context){
 
 class StartService: Service(){
 
-    private var wakeLock: PowerManager.WakeLock? = null
     private var isCallbackRegistered = false
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -65,12 +66,26 @@ class StartService: Service(){
 
     override fun onDestroy() {
         Log.d(TAG, "Destroyed")
+        if (isServiceStarted) {
+            startListener(this)
+        } else {
+            stopService()
+        }
+    }
+
+    private fun stopService() {
+        Log.d(TAG, "Stopping Service")
         apiDestroy()
-        super.onDestroy()
+        wakeLock?.let {
+            while (it.isHeld) {
+                it.release()
+            }
+        }
+        stopSelf()
     }
 
     private fun startService() {
-        if (isServiceStarted) return
+        if (isServiceStarted && nFails == 0) return
         isServiceStarted = true
 
         try {
@@ -83,7 +98,7 @@ class StartService: Service(){
 
         // we need this lock so our service gets not affected by Doze Mode
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
-            newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "EndlessService::lock").apply {
+            newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
                 acquire()
             }
         }
@@ -98,7 +113,7 @@ class StartService: Service(){
             connectivityManager.registerDefaultNetworkCallback(object : NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     Log.d(TAG, "Network is CONNECTED")
-                    startService()
+                    startListener(this@StartService)
                 }
 
                 override fun onLost(network: Network) {

@@ -22,6 +22,11 @@ class SSEListener (val context: Context) : EventSourceListener() {
     override fun onOpen(eventSource: EventSource, response: Response) {
         deleteWarningNotification(context)
         nFails = 0
+        wakeLock?.let {
+            while (it.isHeld) {
+                it.release()
+            }
+        }
         try {
             Log.d(TAG, "onOpen: " + response.code)
         } catch (e: Exception) {
@@ -31,6 +36,9 @@ class SSEListener (val context: Context) : EventSourceListener() {
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
         Log.d(TAG, "New SSE message event=$type message=$data")
+        wakeLock?.let {
+            it.acquire()
+        }
         when (type) {
             "warning" -> Log.d(TAG, "Warning event received.")
             "ping" -> Log.d(TAG, "SSE ping received.")
@@ -53,18 +61,22 @@ class SSEListener (val context: Context) : EventSourceListener() {
                 db.unregisterApp(connectorToken)
             }
         }
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
     }
 
     override fun onClosed(eventSource: EventSource) {
         Log.d(TAG, "onClosed: $eventSource")
-        isServiceStarted = false
+        nFails += 1
         createWarningNotification(context)
         startListener(context)
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
         Log.d(TAG, "onFailure")
-        isServiceStarted = false
         nFails += 1
         if (nFails > 1)
             createWarningNotification(context)
