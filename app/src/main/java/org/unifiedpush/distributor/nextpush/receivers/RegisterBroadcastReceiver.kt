@@ -11,6 +11,7 @@ import org.unifiedpush.distributor.nextpush.api.createQueue
 import org.unifiedpush.distributor.nextpush.api.delQueue
 import org.unifiedpush.distributor.nextpush.api.apiCreateApp
 import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.services.wakeLock
 import java.lang.Exception
 
 /**
@@ -22,6 +23,9 @@ private const val TAG = "RegisterBroadcastReceiver"
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        wakeLock?.let {
+            it.acquire()
+        }
         when (intent!!.action) {
             ACTION_REGISTER ->{
                 Log.i(TAG,"REGISTER")
@@ -83,6 +87,11 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                 } else {
                     Log.d(TAG, "Already deleting $connectorToken")
                 }
+            }
+        }
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
             }
         }
     }
