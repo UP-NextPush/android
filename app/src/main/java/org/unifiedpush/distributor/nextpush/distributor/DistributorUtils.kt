@@ -48,6 +48,23 @@ fun sendEndpoint(context: Context, connectorToken: String) {
     context.sendBroadcast(broadcastIntent)
 }
 
+fun sendRegistrationFailed(
+    context: Context,
+    application: String,
+    connectorToken: String,
+    message: String = ""
+    ) {
+    if (application.isNullOrBlank()) {
+        return
+    }
+    val broadcastIntent = Intent()
+    broadcastIntent.`package` = application
+    broadcastIntent.action = ACTION_REGISTRATION_FAILED
+    broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
+    broadcastIntent.putExtra(EXTRA_MESSAGE, message)
+    context.sendBroadcast(broadcastIntent)
+}
+
 fun sendUnregistered(context: Context, connectorToken: String) {
     val application = getApp(context, connectorToken)
     if (application.isNullOrBlank()) {
@@ -75,4 +92,12 @@ fun getEndpoint(context: Context, connectorToken: String): String {
     val db = getDb(context)
     val appToken = db.getAppToken(connectorToken)
     return "${getUrl(context)}/push/$appToken"
+}
+
+fun isTokenOk(context: Context, connectorToken: String, app: String): Boolean {
+    val db = getDb(context)
+    if (connectorToken !in db.listTokens()) {
+        return true
+    }
+    return db.getPackageName(connectorToken) == app
 }

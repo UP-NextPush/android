@@ -28,7 +28,7 @@ fun createForegroundNotification(context: Context): Notification {
             appName,
             NotificationManager.IMPORTANCE_LOW
         ).let {
-            it.description = context.getString(R.string.listening_notif_description)
+            it.description = context.getString(R.string.foreground_notif_description)
             it
         }
         notificationManager.createNotificationChannel(channel)
@@ -50,9 +50,9 @@ fun createForegroundNotification(context: Context): Notification {
 
     return builder
         .setContentTitle(context.getString(R.string.app_name))
-        .setContentText(context.getString(R.string.listening_notif_description))
+        .setContentText(context.getString(R.string.foreground_notif_description))
         .setSmallIcon(R.drawable.ic_launcher_notification)
-        .setTicker(context.getString(R.string.listening_notif_ticker))
+        .setTicker(context.getString(R.string.foreground_notif_ticker))
         .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
         .setContentIntent(intent)
         .setOngoing(true)

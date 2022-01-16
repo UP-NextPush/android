@@ -65,11 +65,14 @@ fun nextcloudAppNotInstalledDialog(context: Context) {
     builder.show()
 }
 
-fun isConnected(context: Context) : Boolean {
+fun isConnected(context: Context, showDialog: Boolean = false) : Boolean {
     try {
         ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
     } catch (e: NextcloudFilesAppAccountNotFoundException) {
-        nextcloudAppNotInstalledDialog(context)
+        if (showDialog) {
+            nextcloudAppNotInstalledDialog(context)
+        }
+        return false
     } catch (e: NoCurrentAccountSelectedException) {
         Log.d(TAG,"Device is not connected")
         return false

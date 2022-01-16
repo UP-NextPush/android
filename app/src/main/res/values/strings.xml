@@ -5,7 +5,7 @@
     <string name="main_applications_title">Registered applications</string>
 
     <string name="help"></string>
-    <string name="listening_notif_description">Listening for incoming notifications</string>
+    <string name="foreground_notif_description">Notification to run in the foreground</string>
     <string name="connection_button">Login</string>
     <string name="connection_description">You are not connected to Nextcloud yet</string>
     <string name="action_logout">Logout</string>
@@ -18,7 +18,7 @@
     <string name="action_restart">Restart Service</string>
     <string name="warning_notif_description">NextPush is disconnected</string>
     <string name="warning_notif_ticker">Warning</string>
-    <string name="listening_notif_ticker">Listening</string>
+    <string name="foreground_notif_ticker">Foreground</string>
     <string name="message_missing_nextcloud_app">Nextcloud Files is not installed on your device.\nPlease install it</string>
     <string name="uri_market_nextcloud_app">market://details?id=com.nextcloud.client</string>
     <string name="market_chooser_title">Market</string>

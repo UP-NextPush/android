@@ -1,0 +1,3 @@
+- Improve battery management
+- Change foreground notif wording 
+- Follow spec 2.0.0
