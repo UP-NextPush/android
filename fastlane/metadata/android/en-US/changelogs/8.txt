@@ -1,0 +1,3 @@
+- Improve service restarting
+- Optimize registration flow
+- Fix manual restart
