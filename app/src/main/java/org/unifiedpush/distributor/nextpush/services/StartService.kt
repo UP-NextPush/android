@@ -121,8 +121,12 @@ class StartService: Service(){
                     startListener(this@StartService)
                 }
 
-                override fun onLost(network: Network) {
-                    Log.d(TAG, "Network is DISCONNECTED")
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    networkCapabilities: NetworkCapabilities
+                ) {
+                    Log.d(TAG, "Network Capabilities changed")
+                    startListener(this@StartService)
                 }
             })
         } catch (e: Exception) {
