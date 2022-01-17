@@ -67,6 +67,8 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onClosed(eventSource: EventSource) {
+        if (!isServiceStarted)
+            return
         Log.d(TAG, "onClosed: $eventSource")
         nFails += 1
         createWarningNotification(context)
@@ -74,6 +76,8 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+        if (!isServiceStarted)
+            return
         Log.d(TAG, "onFailure")
         nFails += 1
         if (nFails > 1)
@@ -93,8 +97,9 @@ class SSEListener (val context: Context) : EventSourceListener() {
             override fun onTick(millisUntilFinished: Long) {}
 
             override fun onFinish() {
-                Log.d(TAG, "Trying to restart")
-                startListener(context)
+                if (nFails > 0)
+                    Log.d(TAG, "Trying to restart")
+                    startListener(context)
             }
 
         }.start()

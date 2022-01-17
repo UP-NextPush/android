@@ -19,6 +19,7 @@ import android.net.Network
 
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
+import android.net.NetworkCapabilities
 import org.unifiedpush.distributor.nextpush.api.apiDestroy
 import org.unifiedpush.distributor.nextpush.api.apiSync
 import java.lang.Exception
@@ -30,6 +31,7 @@ var nFails = 0
 var wakeLock: PowerManager.WakeLock? = null
 
 fun startListener(context: Context){
+    if (isServiceStarted && nFails == 0) return
     Log.d(TAG, "Starting the Listener")
     val serviceIntent = Intent(context, StartService::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,7 +51,7 @@ class StartService: Service(){
 
     override fun onCreate(){
         super.onCreate()
-        Log.i(TAG,"Starting")
+        Log.i(TAG,"StartService created")
         val notification = createForegroundNotification(this)
         startForeground(NOTIF_ID_FOREGROUND, notification)
     }
@@ -67,6 +69,7 @@ class StartService: Service(){
     override fun onDestroy() {
         Log.d(TAG, "Destroyed")
         if (isServiceStarted) {
+            apiDestroy()
             startListener(this)
         } else {
             stopService()
@@ -76,6 +79,8 @@ class StartService: Service(){
     private fun stopService() {
         Log.d(TAG, "Stopping Service")
         apiDestroy()
+        isServiceStarted = false
+        nFails = 0
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()

@@ -32,6 +32,7 @@ import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
 import org.unifiedpush.distributor.nextpush.api.apiDeleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.distributor.getDb
+import org.unifiedpush.distributor.nextpush.services.isServiceStarted
 import org.unifiedpush.distributor.nextpush.services.startListener
 import java.lang.String.format
 
@@ -144,6 +145,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun restart() {
         Log.d(TAG, "Restarting the Listener")
+        isServiceStarted = false
         val serviceIntent = Intent(this, StartService::class.java)
         this.stopService(serviceIntent)
         startListener(this)
