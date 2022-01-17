@@ -172,13 +172,7 @@ private fun cCreateApp(context: Context,
                        appName: String,
                        connectorToken: String,
                        callback: ()->Unit) {
-    val db = getDb(context)
-    if (db.isRegistered(appName, connectorToken)) {
-        Log.i("RegisterService","$appName already registered")
-        createQueue.remove(connectorToken)
-        callback()
-        return
-    }
+    // The unity of connector token must already be checked here
     val parameters = mutableMapOf(
         "deviceId" to getDeviceId(context)!!,
         "appName" to appName
@@ -199,6 +193,7 @@ private fun cCreateApp(context: Context,
                      * It is printed and not thrown by SQLiteDatabase.java
                      * So we can't catch it
                      */
+                    val db = getDb(context)
                     db.registerApp(appName, connectorToken, response.token)
                 } else {
                     Log.d(TAG, "An error occurred while creating the application.")

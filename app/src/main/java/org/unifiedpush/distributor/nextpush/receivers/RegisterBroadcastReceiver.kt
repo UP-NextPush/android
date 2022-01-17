@@ -33,34 +33,36 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     Log.w(TAG,"Trying to register an app without packageName")
                     return
                 }
-                if (!isConnected(context!!, showDialog = false)) {
-                    sendRegistrationFailed(
-                        context,
-                        application,
-                        connectorToken,
-                        message = "NextPush is not connected"
-                    )
-                    return
-                }
-                if (!isTokenOk(context, connectorToken, application)) {
-                    sendRegistrationFailed(
+                when (checkToken(context!!, connectorToken, application)) {
+                    TOKEN_REGISTERED_OK -> sendEndpoint(context.applicationContext, connectorToken)
+                    TOKEN_NOK -> sendRegistrationFailed(
                         context,
                         application,
                         connectorToken
                     )
-                    return
-                }
-                if (connectorToken !in createQueue) {
-                    createQueue.add(connectorToken)
-                    apiCreateApp(
-                        context.applicationContext,
-                        application,
-                        connectorToken
-                    ) {
-                        sendEndpoint(context.applicationContext, connectorToken)
+                    TOKEN_NEW -> {
+                        if (!isConnected(context, showDialog = false)) {
+                            sendRegistrationFailed(
+                                context,
+                                application,
+                                connectorToken,
+                                message = "NextPush is not connected"
+                            )
+                            return
+                        }
+                        if (connectorToken !in createQueue) {
+                            createQueue.add(connectorToken)
+                            apiCreateApp(
+                                context.applicationContext,
+                                application,
+                                connectorToken
+                            ) {
+                                sendEndpoint(context.applicationContext, connectorToken)
+                            }
+                        } else {
+                            Log.d(TAG, "Already registering $connectorToken")
+                        }
                     }
-                } else {
-                    Log.d(TAG, "Already registering $connectorToken")
                 }
             }
             ACTION_UNREGISTER ->{

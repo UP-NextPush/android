@@ -11,6 +11,10 @@ import org.unifiedpush.distributor.nextpush.account.getUrl
 
 private const val TAG = "DistributorUtils"
 
+const val TOKEN_NEW = "token_new"
+const val TOKEN_REGISTERED_OK = "token_registered_ok"
+const val TOKEN_NOK = "token_nok"
+
 private var db : MessagingDatabase? = null
 
 fun getDb(context: Context): MessagingDatabase {
@@ -94,10 +98,13 @@ fun getEndpoint(context: Context, connectorToken: String): String {
     return "${getUrl(context)}/push/$appToken"
 }
 
-fun isTokenOk(context: Context, connectorToken: String, app: String): Boolean {
+fun checkToken(context: Context, connectorToken: String, app: String): String {
     val db = getDb(context)
     if (connectorToken !in db.listTokens()) {
-        return true
+        return TOKEN_NEW
     }
-    return db.getPackageName(connectorToken) == app
+    if (db.isRegistered(app, connectorToken)) {
+        return TOKEN_REGISTERED_OK
+    }
+    return TOKEN_NOK
 }
