@@ -1,6 +1,9 @@
 package org.unifiedpush.distributor.nextpush.activities
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -10,7 +13,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.ui.UiExceptionManager
-import org.unifiedpush.distributor.nextpush.services.StartService
 import com.nextcloud.android.sso.AccountImporter.IAccountAccessGranted
 
 import com.nextcloud.android.sso.api.NextcloudAPI.ApiConnectedListener
@@ -32,8 +34,7 @@ import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
 import org.unifiedpush.distributor.nextpush.api.apiDeleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
 import org.unifiedpush.distributor.nextpush.distributor.getDb
-import org.unifiedpush.distributor.nextpush.services.isServiceStarted
-import org.unifiedpush.distributor.nextpush.services.startListener
+import org.unifiedpush.distributor.nextpush.services.*
 import java.lang.String.format
 
 private const val TAG = "NextPush-MainActivity"
@@ -145,6 +146,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun restart() {
         Log.d(TAG, "Restarting the Listener")
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(p0: Context?, p1: Intent?) {
+                startListener(this@MainActivity)
+            }
+        }
+        val intentFilter = IntentFilter(SERVICE_STOPPED_ACTION)
+        registerReceiver(receiver, intentFilter)
         isServiceStarted = false
         val serviceIntent = Intent(this, StartService::class.java)
         this.stopService(serviceIntent)

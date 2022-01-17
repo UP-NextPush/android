@@ -26,6 +26,7 @@ import java.lang.Exception
 
 private const val TAG = "StartService"
 const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
+const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
 var isServiceStarted = false
 var nFails = 0
 var wakeLock: PowerManager.WakeLock? = null
@@ -78,14 +79,17 @@ class StartService: Service(){
 
     private fun stopService() {
         Log.d(TAG, "Stopping Service")
-        apiDestroy()
         isServiceStarted = false
         nFails = 0
+        apiDestroy()
+        connectivityManager?.unregisterNetworkCallback(networkCallback)
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()
             }
         }
+        val i = Intent(SERVICE_STOPPED_ACTION)
+        sendBroadcast(i)
         stopSelf()
     }
 
@@ -111,24 +115,28 @@ class StartService: Service(){
         apiSync(this)
     }
 
-    private fun registerNetworkCallback() {
-        try {
-            val connectivityManager =
-                this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-            connectivityManager.registerDefaultNetworkCallback(object : NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    Log.d(TAG, "Network is CONNECTED")
-                    startListener(this@StartService)
-                }
+    private var connectivityManager = null as ConnectivityManager?
 
-                override fun onCapabilitiesChanged(
-                    network: Network,
-                    networkCapabilities: NetworkCapabilities
-                ) {
-                    Log.d(TAG, "Network Capabilities changed")
-                    startListener(this@StartService)
-                }
-            })
+    private val networkCallback = object : NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            Log.d(TAG, "Network is CONNECTED")
+            startListener(this@StartService)
+        }
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities
+        ) {
+            Log.d(TAG, "Network Capabilities changed")
+            startListener(this@StartService)
+        }
+    }
+
+    private fun registerNetworkCallback() {
+        Log.d(TAG, "Registering Network Callback")
+        try {
+            connectivityManager = this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
         } catch (e: Exception) {
             e.printStackTrace()
         }
