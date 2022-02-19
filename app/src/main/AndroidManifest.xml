@@ -42,6 +42,7 @@
             android:name=".receivers.RegisterBroadcastReceiver"
             android:enabled="true" >
             <intent-filter>
+                <action android:name="org.unifiedpush.android.distributor.feature.BYTES_MESSAGE"/>
                 <action android:name="org.unifiedpush.android.distributor.REGISTER" />
                 <action android:name="org.unifiedpush.android.distributor.UNREGISTER" />
             </intent-filter>

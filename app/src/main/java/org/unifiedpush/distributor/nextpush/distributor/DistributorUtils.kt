@@ -24,7 +24,7 @@ fun getDb(context: Context): MessagingDatabase {
     return db!!
 }
 
-fun sendMessage(context: Context, appToken: String, message: String) {
+fun sendMessage(context: Context, appToken: String, message: ByteArray) {
     val db = getDb(context)
     val connectorToken = db.getConnectorToken(appToken)
     val application = getApp(context, connectorToken)
@@ -35,7 +35,8 @@ fun sendMessage(context: Context, appToken: String, message: String) {
     broadcastIntent.`package` = application
     broadcastIntent.action = ACTION_MESSAGE
     broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
-    broadcastIntent.putExtra(EXTRA_MESSAGE, message)
+    broadcastIntent.putExtra(EXTRA_MESSAGE, String(message))
+    broadcastIntent.putExtra(EXTRA_BYTES_MESSAGE, message)
     context.sendBroadcast(broadcastIntent)
 }
 

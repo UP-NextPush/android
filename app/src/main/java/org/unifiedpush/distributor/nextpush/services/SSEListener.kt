@@ -46,7 +46,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
                 sendMessage(
                     context,
                     message.token,
-                    String(Base64.decode(message.message, Base64.DEFAULT))
+                    Base64.decode(message.message, Base64.DEFAULT)
                 )
             }
             "deleteApp" -> {
