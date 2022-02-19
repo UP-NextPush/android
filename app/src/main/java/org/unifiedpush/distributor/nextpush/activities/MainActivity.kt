@@ -13,27 +13,22 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.ui.UiExceptionManager
-import com.nextcloud.android.sso.AccountImporter.IAccountAccessGranted
-
-import com.nextcloud.android.sso.api.NextcloudAPI.ApiConnectedListener
 
 import com.nextcloud.android.sso.helper.SingleAccountHelper
 
-import com.nextcloud.android.sso.model.SingleSignOnAccount
-import java.lang.Exception
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.nextcloud.android.sso.AccountImporter.clearAllAuthTokens
 import com.nextcloud.android.sso.exceptions.*
 import org.unifiedpush.distributor.nextpush.R
-import org.unifiedpush.distributor.nextpush.account.isConnected
-import org.unifiedpush.distributor.nextpush.account.connect
-import org.unifiedpush.distributor.nextpush.account.nextcloudAppNotInstalledDialog
-import org.unifiedpush.distributor.nextpush.account.ssoAccount
-import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
-import org.unifiedpush.distributor.nextpush.api.apiDeleteDevice
-import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
-import org.unifiedpush.distributor.nextpush.distributor.getDb
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.connect
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteDevice
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
 import org.unifiedpush.distributor.nextpush.services.*
 import java.lang.String.format
 
@@ -64,35 +59,22 @@ class MainActivity : AppCompatActivity() {
                 requestCode,
                 resultCode,
                 data,
-                this,
-                object : IAccountAccessGranted {
-                    var callback: ApiConnectedListener = object : ApiConnectedListener {
-                        override fun onConnected() {}
+                this
+            ) { account ->
+                val context = applicationContext
 
-                        override fun onError(ex: Exception) {
-                            Log.e(TAG, "Cannot get account access", ex)
-                        }
-                    }
+                SingleAccountHelper.setCurrentAccount(context, account.name)
 
-                    override fun accountAccessGranted(account: SingleSignOnAccount) {
-                        val context = applicationContext
-
-                        // As this library supports multiple accounts we created some helper methods if you only want to use one.
-                        // The following line stores the selected account as the "default" account which can be queried by using
-                        // the SingleAccountHelper.getCurrentSingleSignOnAccount(context) method
-                        SingleAccountHelper.setCurrentAccount(context, account.name)
-
-                        // Get the "default" account
-                        try {
-                            ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
-                        } catch (e: NextcloudFilesAppAccountNotFoundException) {
-                            nextcloudAppNotInstalledDialog(context)
-                        } catch (e: NoCurrentAccountSelectedException) {
-                            UiExceptionManager.showDialogForException(context, e)
-                        }
-                        showMain()
-                    }
-                })
+                // Get the "default" account
+                try {
+                    ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
+                } catch (e: NextcloudFilesAppAccountNotFoundException) {
+                    nextcloudAppNotInstalledDialog(context)
+                } catch (e: NoCurrentAccountSelectedException) {
+                    UiExceptionManager.showDialogForException(context, e)
+                }
+                showMain()
+            }
         } catch (e: AccountImportCancelledException) {}
         super.onActivityResult(requestCode, resultCode, data)
     }
@@ -173,15 +155,15 @@ class MainActivity : AppCompatActivity() {
                 .apply()
             apiDeleteDevice(this)
             showStart()
-            finish();
-            startActivity(intent);
+            finish()
+            startActivity(intent)
         }
         alert.setNegativeButton(getString(R.string.discard)) { dialog, _ -> dialog.dismiss() }
         alert.show()
     }
 
     private fun setListView(){
-        listView = findViewById<ListView>(R.id.applications_list)
+        listView = findViewById(R.id.applications_list)
         val db = getDb(this)
         val tokenList = db.listTokens().toMutableList()
         val appList = emptyArray<String>().toMutableList()
@@ -194,7 +176,7 @@ class MainActivity : AppCompatActivity() {
                 appList
         )
         listView.setOnItemLongClickListener(
-                fun(parent: AdapterView<*>, v: View, position: Int, id: Long): Boolean {
+                fun(_: AdapterView<*>, _: View, position: Int, _: Long): Boolean {
                     val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
                             this)
                     alert.setTitle("Unregistering")
@@ -202,9 +184,9 @@ class MainActivity : AppCompatActivity() {
                     alert.setPositiveButton("YES") { dialog, _ ->
                         val connectorToken = tokenList[position]
                         sendUnregistered(this, connectorToken)
-                        val db = getDb(this)
-                        val appToken = db.getAppToken(connectorToken)
-                        db.unregisterApp(connectorToken)
+                        val database = getDb(this)
+                        val appToken = database.getAppToken(connectorToken)
+                        database.unregisterApp(connectorToken)
                         apiDeleteApp(this, appToken) {
                             Log.d(TAG,"Unregistration is finished")
                         }

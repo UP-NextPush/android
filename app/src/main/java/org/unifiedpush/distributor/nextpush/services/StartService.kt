@@ -12,16 +12,17 @@ import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundExce
 import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
 
-import org.unifiedpush.distributor.nextpush.account.ssoAccount
-import org.unifiedpush.distributor.nextpush.account.nextcloudAppNotInstalledDialog
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
 
 import android.net.Network
 
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
 import android.net.NetworkCapabilities
-import org.unifiedpush.distributor.nextpush.api.apiDestroy
-import org.unifiedpush.distributor.nextpush.api.apiSync
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDestroy
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiSync
+import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createForegroundNotification
 import java.lang.Exception
 
 private const val TAG = "StartService"
@@ -54,7 +55,7 @@ class StartService: Service(){
         super.onCreate()
         Log.i(TAG,"StartService created")
         val notification = createForegroundNotification(this)
-        startForeground(NOTIF_ID_FOREGROUND, notification)
+        startForeground(NOTIFICATION_ID_FOREGROUND, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -141,6 +142,5 @@ class StartService: Service(){
             e.printStackTrace()
         }
     }
-
 }
 

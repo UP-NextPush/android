@@ -8,18 +8,18 @@ import android.database.sqlite.SQLiteOpenHelper
 private const val DB_NAME = "apps_db"
 private const val DB_VERSION = 1
 
+private const val TABLE_APPS = "apps"
+private const val FIELD_PACKAGE_NAME = "packageName"
+private const val FIELD_CONNECTOR_TOKEN = "connectorToken"
+private const val FIELD_APP_TOKEN = "appToken"
+private const val CREATE_TABLE_APPS = "CREATE TABLE apps (" +
+        "$FIELD_PACKAGE_NAME TEXT," +
+        "$FIELD_CONNECTOR_TOKEN TEXT," +
+        "$FIELD_APP_TOKEN TEXT," +
+        "PRIMARY KEY ($FIELD_CONNECTOR_TOKEN));"
+
 class MessagingDatabase(context: Context):
     SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
-    private val TABLE_APPS = "apps"
-    private val FIELD_PACKAGE_NAME = "packageName"
-    private val FIELD_CONNECTOR_TOKEN = "connectorToken"
-    private val FIELD_APP_TOKEN = "appToken"
-    private val CREATE_TABLE_APPS = "CREATE TABLE apps (" +
-            "$FIELD_PACKAGE_NAME TEXT," +
-            "$FIELD_CONNECTOR_TOKEN TEXT," +
-            "$FIELD_APP_TOKEN TEXT," +
-            "PRIMARY KEY ($FIELD_CONNECTOR_TOKEN));"
-
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(CREATE_TABLE_APPS)

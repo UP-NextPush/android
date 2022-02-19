@@ -4,13 +4,21 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import org.unifiedpush.distributor.nextpush.account.isConnected
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiCreateApp
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.createQueue
+import org.unifiedpush.distributor.nextpush.api.ApiUtils.delQueue
 
 import org.unifiedpush.distributor.nextpush.distributor.*
-import org.unifiedpush.distributor.nextpush.api.createQueue
-import org.unifiedpush.distributor.nextpush.api.delQueue
-import org.unifiedpush.distributor.nextpush.api.apiCreateApp
-import org.unifiedpush.distributor.nextpush.api.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_NEW
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_NOK
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_REGISTERED_OK
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.checkToken
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendEndpoint
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendRegistrationFailed
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
 import org.unifiedpush.distributor.nextpush.services.wakeLock
 import java.lang.Exception
 

@@ -11,9 +11,11 @@ import okhttp3.Response
 import java.lang.Exception
 import com.google.gson.Gson
 import org.unifiedpush.distributor.nextpush.api.SSEResponse
-import org.unifiedpush.distributor.nextpush.distributor.getDb
-import org.unifiedpush.distributor.nextpush.distributor.sendMessage
-import org.unifiedpush.distributor.nextpush.distributor.sendUnregistered
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendMessage
+import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
+import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createWarningNotification
+import org.unifiedpush.distributor.nextpush.services.NotificationUtils.deleteWarningNotification
 
 private const val TAG = "SSEListener"
 

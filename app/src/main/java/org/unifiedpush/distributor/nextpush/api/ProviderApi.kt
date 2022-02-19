@@ -1,8 +1,7 @@
 package org.unifiedpush.distributor.nextpush.api
 
-import io.reactivex.Observable;
+import io.reactivex.Observable
 import retrofit2.http.PUT
-import retrofit2.http.GET
 import retrofit2.http.DELETE
 import retrofit2.http.Body
 import retrofit2.http.Path
@@ -13,9 +12,6 @@ interface ProviderApi {
     fun createDevice(
         @Body subscribeMap: MutableMap<String, String>?
     ): Observable<ApiResponse>?
-
-    @GET("/device/{deviceId}")
-    fun syncDevice(@Path("deviceId") devideId: String?): Observable<SSEResponse?>?
 
     @DELETE("/device/{deviceId}")
     fun deleteDevice(@Path("deviceId") devideId: String?): Observable<ApiResponse>?
