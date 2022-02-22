@@ -3,6 +3,7 @@ package org.unifiedpush.distributor.nextpush.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
 import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiCreateApp
@@ -19,7 +20,6 @@ import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendEndpoint
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendRegistrationFailed
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
-import org.unifiedpush.distributor.nextpush.services.wakeLock
 import java.lang.Exception
 
 /**
@@ -30,8 +30,16 @@ private const val TAG = "RegisterBroadcastReceiver"
 
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context?, intent: Intent?) {
-        wakeLock?.acquire(10000L /*10 secs*/)
+    companion object {
+        private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
+        private var wakeLock : PowerManager.WakeLock? = null
+    }
+
+    override fun onReceive(context: Context, intent: Intent?) {
+        wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+            newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
+        }
+        wakeLock?.acquire(30000L /*30 secs*/)
         when (intent!!.action) {
             ACTION_REGISTER ->{
                 Log.i(TAG,"REGISTER")

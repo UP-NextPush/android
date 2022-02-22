@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
             format(getString(R.string.main_account_desc), ssoAccount.name)
         showLogout = true
         invalidateOptionsMenu()
-        startListener(this)
+        RestartWorker.start(this)
     }
 
     private fun showStart() {
@@ -130,15 +130,14 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Restarting the Listener")
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(p0: Context?, p1: Intent?) {
-                startListener(this@MainActivity)
+                RestartWorker.start(this@MainActivity, delay = 0)
             }
         }
-        val intentFilter = IntentFilter(SERVICE_STOPPED_ACTION)
+        val intentFilter = IntentFilter(StartService.SERVICE_STOPPED_ACTION)
         registerReceiver(receiver, intentFilter)
-        isServiceStarted = false
+        StartService.isServiceStarted = false
         val serviceIntent = Intent(this, StartService::class.java)
         this.stopService(serviceIntent)
-        startListener(this)
     }
 
     private fun logout() {

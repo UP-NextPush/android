@@ -26,26 +26,30 @@ import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createFor
 import java.lang.Exception
 
 private const val TAG = "StartService"
-const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
-const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
-var isServiceStarted = false
-var nFails = 0
-var wakeLock: PowerManager.WakeLock? = null
-
-fun startListener(context: Context){
-    if (isServiceStarted && nFails == 0) return
-    Log.d(TAG, "Starting the Listener")
-    val serviceIntent = Intent(context, StartService::class.java)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        context.startForegroundService(serviceIntent)
-    }else{
-        context.startService(serviceIntent)
-    }
-}
 
 class StartService: Service(){
 
-    private var isCallbackRegistered = false
+    companion object {
+        const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
+        const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
+        var isServiceStarted = false
+        var nFails = 0
+        var wakeLock: PowerManager.WakeLock? = null
+        private var isCallbackRegistered = false
+
+        fun startListener(context: Context){
+            if (isServiceStarted && nFails == 0) return
+            Log.d(TAG, "Starting the Listener")
+            Log.d(TAG, "Service is started: $isServiceStarted")
+            Log.d(TAG, "nFails: $nFails")
+            val serviceIntent = Intent(context, StartService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            }else{
+                context.startService(serviceIntent)
+            }
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -59,6 +63,7 @@ class StartService: Service(){
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand")
         if (!isCallbackRegistered) {
             isCallbackRegistered = true
             registerNetworkCallback()
@@ -72,7 +77,7 @@ class StartService: Service(){
         Log.d(TAG, "Destroyed")
         if (isServiceStarted) {
             apiDestroy()
-            startListener(this)
+            RestartWorker.start(this, delay = 0)
         } else {
             stopService()
         }
@@ -121,7 +126,9 @@ class StartService: Service(){
     private val networkCallback = object : NetworkCallback() {
         override fun onAvailable(network: Network) {
             Log.d(TAG, "Network is CONNECTED")
-            startListener(this@StartService)
+            if (nFails > 1) {
+                RestartWorker.start(this@StartService, delay = 0)
+            }
         }
 
         override fun onCapabilitiesChanged(
@@ -129,7 +136,9 @@ class StartService: Service(){
             networkCapabilities: NetworkCapabilities
         ) {
             Log.d(TAG, "Network Capabilities changed")
-            startListener(this@StartService)
+            if (nFails > 1) {
+                RestartWorker.start(this@StartService, delay = 0)
+            } // else, it retries in max 2sec
         }
     }
 

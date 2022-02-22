@@ -1,8 +1,6 @@
 package org.unifiedpush.distributor.nextpush.services
 
 import android.content.Context
-import android.os.CountDownTimer
-import android.os.Looper
 import android.util.Base64
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSource
@@ -16,15 +14,20 @@ import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendMes
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
 import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createWarningNotification
 import org.unifiedpush.distributor.nextpush.services.NotificationUtils.deleteWarningNotification
+import java.util.*
 
 private const val TAG = "SSEListener"
 
 class SSEListener (val context: Context) : EventSourceListener() {
 
+    companion object {
+        var lastEventDate : Calendar? = null
+    }
+
     override fun onOpen(eventSource: EventSource, response: Response) {
         deleteWarningNotification(context)
-        nFails = 0
-        wakeLock?.let {
+        StartService.nFails = 0
+        StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
             }
@@ -38,7 +41,9 @@ class SSEListener (val context: Context) : EventSourceListener() {
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
         Log.d(TAG, "New SSE message event=$type message=$data")
-        wakeLock?.acquire(10000L /*10 secs*/)
+        StartService.wakeLock?.acquire(10000L /*10 secs*/)
+        lastEventDate = Calendar.getInstance()
+
         when (type) {
             "warning" -> Log.d(TAG, "Warning event received.")
             "ping" -> Log.d(TAG, "SSE ping received.")
@@ -61,7 +66,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
                 db.unregisterApp(connectorToken)
             }
         }
-        wakeLock?.let {
+        StartService.wakeLock?.let {
             if (it.isHeld) {
                 it.release()
             }
@@ -69,49 +74,36 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onClosed(eventSource: EventSource) {
-        if (!isServiceStarted)
+        if (!StartService.isServiceStarted)
             return
         Log.d(TAG, "onClosed: $eventSource")
-        nFails += 1
+        StartService.nFails += 1
         createWarningNotification(context)
-        startListener(context)
+        RestartWorker.start(context, delay = 0)
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-        if (!isServiceStarted)
+        if (!StartService.isServiceStarted)
             return
         Log.d(TAG, "onFailure")
-        nFails += 1
-        if (nFails > 1)
-            createWarningNotification(context)
-        val timeStop = when (nFails) {
-            1 -> 2000          // 2sec
-            2 -> 20000         // 20sec
-            3 -> 60000         // 1min
-            4 -> 300000        // 5min
-            5 -> 600000        // 10min
-            else -> 1800000    // 30min
-        }.toLong()
-        Log.d(TAG, "Retrying in $timeStop ms")
-        Looper.prepare()
-        object : CountDownTimer(timeStop, timeStop) {
-
-            override fun onTick(millisUntilFinished: Long) {}
-
-            override fun onFinish() {
-                if (nFails > 0)
-                    Log.d(TAG, "Trying to restart")
-                    startListener(context)
-            }
-
-        }.start()
-        Looper.loop()
         t?.let {
             Log.d(TAG, "An error occurred: $t")
-            return
         }
         response?.let {
             Log.d(TAG, "onFailure: ${it.code}")
         }
+        StartService.nFails += 1
+        if (StartService.nFails > 1)
+            createWarningNotification(context)
+        val delay = when (StartService.nFails) {
+            1 -> 2          // 2sec
+            2 -> 20         // 20sec
+            3 -> 60         // 1min
+            4 -> 300        // 5min
+            5 -> 600        // 10min
+            else -> return  // else keep the worker with its 20min
+        }.toLong()
+        Log.d(TAG, "Retrying in $delay s")
+        RestartWorker.start(context, delay = delay)
     }
 }
