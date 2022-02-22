@@ -41,7 +41,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
         Log.d(TAG, "New SSE message event=$type message=$data")
-        StartService.wakeLock?.acquire(10000L /*10 secs*/)
+        StartService.wakeLock?.acquire(30000L /*30 secs*/)
         lastEventDate = Calendar.getInstance()
 
         when (type) {
