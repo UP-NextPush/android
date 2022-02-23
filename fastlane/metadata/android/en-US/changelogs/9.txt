@@ -1,0 +1,3 @@
+- Implement last UnifiedPush Android specifications (AND_2.0.0)
+- Use single periodic worker to restart
+- Increase wakelock timeout
