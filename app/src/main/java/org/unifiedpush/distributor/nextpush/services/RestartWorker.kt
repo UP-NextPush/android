@@ -31,8 +31,10 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
     override fun doWork(): Result {
         Log.d(TAG, "Working")
         val currentDate = Calendar.getInstance()
-        val restartDate = lastEventDate?.add(Calendar.MINUTE, 15)
+        val restartDate = lastEventDate
+        restartDate?.add(Calendar.MINUTE, 15)
         if (restartDate == null || currentDate.after(restartDate)) {
+            Log.d(TAG, "Restarting")
             StartService.startListener(applicationContext)
         }
         return Result.success()
