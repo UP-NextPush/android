@@ -40,6 +40,7 @@ object DistributorUtils {
         broadcastIntent.putExtra(EXTRA_MESSAGE, String(message))
         broadcastIntent.putExtra(EXTRA_BYTES_MESSAGE, message)
         context.sendBroadcast(broadcastIntent)
+        Log.d(TAG, "Message forwarded")
     }
 
     fun sendEndpoint(context: Context, connectorToken: String) {

@@ -22,6 +22,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
 
     companion object {
         var lastEventDate : Calendar? = null
+        var keepalive = 900
     }
 
     override fun onOpen(eventSource: EventSource, response: Response) {
@@ -40,15 +41,17 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-        Log.d(TAG, "New SSE message event=$type message=$data")
+        Log.d(TAG, "New SSE message event: $type")
         StartService.wakeLock?.acquire(30000L /*30 secs*/)
         lastEventDate = Calendar.getInstance()
 
         when (type) {
-            "warning" -> Log.d(TAG, "Warning event received.")
-            "ping" -> Log.d(TAG, "SSE ping received.")
+            "keepalive" -> {
+                val message = Gson().fromJson(data, SSEResponse::class.java)
+                keepalive = message.keepalive
+                Log.d(TAG, "New keepalive: $keepalive")
+            }
             "message" -> {
-                Log.d(TAG, "Notification event received.")
                 val message = Gson().fromJson(data, SSEResponse::class.java)
                 sendMessage(
                     context,

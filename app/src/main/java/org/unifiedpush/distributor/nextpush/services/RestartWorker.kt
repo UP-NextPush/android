@@ -3,6 +3,7 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import androidx.work.*
+import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.keepalive
 import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.lastEventDate
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -31,9 +32,13 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
     override fun doWork(): Result {
         Log.d(TAG, "Working")
         val currentDate = Calendar.getInstance()
-        val restartDate = lastEventDate
-        restartDate?.add(Calendar.MINUTE, 15)
-        if (restartDate == null || currentDate.after(restartDate)) {
+        val restartDate = Calendar.getInstance()
+        lastEventDate?.let {
+            restartDate.time = it.time
+            restartDate.add(Calendar.SECOND, keepalive)
+        }
+        Log.d(TAG, "restartDate: ${restartDate.time}")
+        if (lastEventDate == null || currentDate.after(restartDate)) {
             Log.d(TAG, "Restarting")
             StartService.startListener(applicationContext)
         }
