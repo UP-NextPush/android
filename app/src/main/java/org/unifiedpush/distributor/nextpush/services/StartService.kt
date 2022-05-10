@@ -89,6 +89,7 @@ class StartService: Service(){
         nFails = 0
         apiDestroy()
         connectivityManager?.unregisterNetworkCallback(networkCallback)
+        isCallbackRegistered = false
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()
