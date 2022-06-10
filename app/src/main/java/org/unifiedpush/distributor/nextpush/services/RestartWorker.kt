@@ -15,7 +15,7 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
     companion object {
         private const val TAG = "RestartWorker"
         fun start(context: Context, delay: Long? = null) {
-            val work = PeriodicWorkRequestBuilder<RestartWorker>(20, TimeUnit.MINUTES)
+            val work = PeriodicWorkRequestBuilder<RestartWorker>(16, TimeUnit.MINUTES)
             if (delay != null) {
                 lastEventDate = null
                 work.setInitialDelay(delay, TimeUnit.SECONDS)
@@ -36,9 +36,13 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
         lastEventDate?.let {
             restartDate.time = it.time
             restartDate.add(Calendar.SECOND, keepalive)
-        }
-        Log.d(TAG, "restartDate: ${restartDate.time}")
-        if (lastEventDate == null || currentDate.after(restartDate)) {
+            Log.d(TAG, "restartDate: ${restartDate.time}")
+            if (currentDate.after(restartDate)) {
+                Log.d(TAG, "Restarting")
+                StartService.nFails = 5 // Max, will keep using the current worker
+                StartService.startListener(applicationContext)
+            }
+        }?:run {
             Log.d(TAG, "Restarting")
             StartService.startListener(applicationContext)
         }
