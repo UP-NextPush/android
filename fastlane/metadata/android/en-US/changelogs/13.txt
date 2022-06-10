@@ -1,0 +1,1 @@
+Fix Restart worker when ping is missing
