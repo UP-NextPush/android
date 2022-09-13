@@ -12,8 +12,6 @@ import org.unifiedpush.distributor.nextpush.api.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendMessage
 import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
-import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createWarningNotification
-import org.unifiedpush.distributor.nextpush.services.NotificationUtils.deleteWarningNotification
 import java.util.*
 
 private const val TAG = "SSEListener"
@@ -26,8 +24,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onOpen(eventSource: EventSource, response: Response) {
-        deleteWarningNotification(context)
-        StartService.nFails = 0
+        StartService.newEvent(context, eventSource)
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -80,8 +77,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
         if (!StartService.isServiceStarted)
             return
         Log.d(TAG, "onClosed: $eventSource")
-        StartService.nFails += 1
-        createWarningNotification(context)
+        StartService.newFail(context, eventSource)
         RestartWorker.start(context, delay = 0)
     }
 
@@ -95,16 +91,14 @@ class SSEListener (val context: Context) : EventSourceListener() {
         response?.let {
             Log.d(TAG, "onFailure: ${it.code}")
         }
-        StartService.nFails += 1
-        if (StartService.nFails > 1)
-            createWarningNotification(context)
+        StartService.newFail(context, eventSource)
         val delay = when (StartService.nFails) {
             1 -> 2          // 2sec
             2 -> 20         // 20sec
             3 -> 60         // 1min
             4 -> 300        // 5min
             5 -> 600        // 10min
-            else -> return  // else keep the worker with its 20min
+            else -> return  // else keep the worker with its 16min
         }.toLong()
         Log.d(TAG, "Retrying in $delay s")
         RestartWorker.start(context, delay = delay)

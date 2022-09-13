@@ -20,6 +20,7 @@ import android.net.Network
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
 import android.net.NetworkCapabilities
+import okhttp3.sse.EventSource
 import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDestroy
 import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiSync
 import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createForegroundNotification
@@ -29,16 +30,15 @@ private const val TAG = "StartService"
 
 class StartService: Service(){
 
-    companion object {
-        const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
+    companion object: FailureHandler {
+        private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
         const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
+
         var isServiceStarted = false
-        var nFails = 0
         var wakeLock: PowerManager.WakeLock? = null
-        private var isCallbackRegistered = false
 
         fun startListener(context: Context){
-            if (isServiceStarted && nFails == 0) return
+            if (isServiceStarted && !hasFailed()) return
             Log.d(TAG, "Starting the Listener")
             Log.d(TAG, "Service is started: $isServiceStarted")
             Log.d(TAG, "nFails: $nFails")
@@ -49,7 +49,11 @@ class StartService: Service(){
                 context.startService(serviceIntent)
             }
         }
+        override var nFails = 0
+        override var eventSource: EventSource? = null
     }
+
+    private var isCallbackRegistered = false
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -77,6 +81,7 @@ class StartService: Service(){
         Log.d(TAG, "Destroyed")
         if (isServiceStarted) {
             apiDestroy()
+            Log.d(TAG, "onDestroy: restarting worker")
             RestartWorker.start(this, delay = 0)
         } else {
             stopService()
@@ -86,7 +91,7 @@ class StartService: Service(){
     private fun stopService() {
         Log.d(TAG, "Stopping Service")
         isServiceStarted = false
-        nFails = 0
+        clearFails()
         apiDestroy()
         connectivityManager?.unregisterNetworkCallback(networkCallback)
         isCallbackRegistered = false
@@ -101,7 +106,7 @@ class StartService: Service(){
     }
 
     private fun startService() {
-        if (isServiceStarted && nFails == 0) return
+        if (isServiceStarted && !hasFailed()) return
         isServiceStarted = true
 
         try {
@@ -127,7 +132,8 @@ class StartService: Service(){
     private val networkCallback = object : NetworkCallback() {
         override fun onAvailable(network: Network) {
             Log.d(TAG, "Network is CONNECTED")
-            if (nFails > 1) {
+            if (StartService.hasFailed(twice = true, orNeverStart = false)) {
+                Log.d(TAG, "networkCallback: restarting worker")
                 RestartWorker.start(this@StartService, delay = 0)
             }
         }
@@ -137,7 +143,8 @@ class StartService: Service(){
             networkCapabilities: NetworkCapabilities
         ) {
             Log.d(TAG, "Network Capabilities changed")
-            if (nFails > 1) {
+            if (StartService.hasFailed(twice = true, orNeverStart = false)) {
+                Log.d(TAG, "networkCallback: restarting worker")
                 RestartWorker.start(this@StartService, delay = 0)
             } // else, it retries in max 2sec
         }

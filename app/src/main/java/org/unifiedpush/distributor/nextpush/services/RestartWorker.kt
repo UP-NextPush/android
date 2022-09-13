@@ -39,7 +39,7 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
             Log.d(TAG, "restartDate: ${restartDate.time}")
             if (currentDate.after(restartDate)) {
                 Log.d(TAG, "Restarting")
-                StartService.nFails = 5 // Max, will keep using the current worker
+                StartService.setMaxFails(applicationContext) // Max, will keep using the current worker
                 StartService.startListener(applicationContext)
             }
         }?:run {
