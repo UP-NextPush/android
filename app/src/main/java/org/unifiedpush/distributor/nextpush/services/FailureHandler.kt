@@ -14,7 +14,7 @@ interface FailureHandler {
     // This is the last eventSource opened
     var eventSource: EventSource?
 
-    fun newEvent(context: Context, eventSource: EventSource) {
+    fun newEventSource(context: Context, eventSource: EventSource) {
         Log.d(TAG,"newEvent/Eventsource: $eventSource")
         this.eventSource = eventSource
         nFails = 0

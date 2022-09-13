@@ -24,7 +24,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onOpen(eventSource: EventSource, response: Response) {
-        StartService.newEvent(context, eventSource)
+        StartService.newEventSource(context, eventSource)
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
