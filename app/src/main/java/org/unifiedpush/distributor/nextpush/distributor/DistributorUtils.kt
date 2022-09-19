@@ -89,7 +89,7 @@ object DistributorUtils {
         val db = getDb(context)
         val app = db.getPackageName(connectorToken)
         return if (app.isBlank()) {
-            Log.w(TAG, "No app found for $connectorToken")
+            Log.w(TAG, "No app found for this token")
             null
         } else {
             app

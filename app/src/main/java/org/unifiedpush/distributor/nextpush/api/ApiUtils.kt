@@ -84,10 +84,10 @@ object ApiUtils {
                     }
 
                     override fun onNext(response: ApiResponse) {
-                        val deviceIdentifier: String = response.deviceId
-                        Log.d(TAG, "Device Identifier: $deviceIdentifier")
-                        saveDeviceId(context, deviceIdentifier)
-                        deviceId = deviceIdentifier
+                        response.deviceId.let {
+                            saveDeviceId(context, it)
+                            deviceId = it
+                        }
                     }
 
                     override fun onError(e: Throwable) {
@@ -105,7 +105,7 @@ object ApiUtils {
                 })
         } else {
             // Sync directly
-            Log.d(TAG, "Found deviceId: $deviceId")
+            Log.d(TAG, "Found saved deviceId")
             deviceId?.let {
                 cSync(context, it)
             }

@@ -76,7 +76,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                                 sendEndpoint(context.applicationContext, connectorToken)
                             }
                         } else {
-                            Log.d(TAG, "Already registering $connectorToken")
+                            Log.d(TAG, "Already registering this token")
                         }
                     }
                 }
@@ -101,7 +101,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                         Log.d(TAG, "Could not delete app")
                     }
                 } else {
-                    Log.d(TAG, "Already deleting $connectorToken")
+                    Log.d(TAG, "Already deleting this token")
                 }
             }
         }
