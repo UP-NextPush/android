@@ -1,15 +1,19 @@
 package org.unifiedpush.distributor.nextpush.activities
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.ui.UiExceptionManager
@@ -43,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
+        requestPermissions()
         if (isConnected(this, showDialog = true)) {
             showMain()
         } else {
@@ -97,6 +102,23 @@ class MainActivity : AppCompatActivity() {
         invalidateOptionsMenu()
     }
 
+    private fun requestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (!granted &&
+                    shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.no_notification_dialog_title))
+                        .setMessage(R.string.no_notification_dialog_message)
+                        .show()
+                }
+            } .launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        }
+    }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
