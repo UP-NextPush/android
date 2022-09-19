@@ -17,13 +17,13 @@ object DistributorUtils {
     const val TOKEN_REGISTERED_OK = "token_registered_ok"
     const val TOKEN_NOK = "token_nok"
 
-    private var db: MessagingDatabase? = null
+    private lateinit var db: MessagingDatabase
 
     fun getDb(context: Context): MessagingDatabase {
-        if (db == null) {
+        if (!this::db.isInitialized) {
             db = MessagingDatabase(context)
         }
-        return db!!
+        return db
     }
 
     fun sendMessage(context: Context, appToken: String, message: ByteArray) {

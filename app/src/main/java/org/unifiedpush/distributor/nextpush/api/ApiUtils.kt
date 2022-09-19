@@ -97,14 +97,18 @@ object ApiUtils {
                     override fun onComplete() {
                         saveUrl(context, "${ssoAccount.url}${mApiEndpoint}")
                         // Sync once it is registered
-                        cSync(context, deviceId!!)
+                        deviceId?.let {
+                            cSync(context, it)
+                        }
                         Log.d(TAG, "mApi register: onComplete")
                     }
                 })
         } else {
             // Sync directly
             Log.d(TAG, "Found deviceId: $deviceId")
-            cSync(context, deviceId!!)
+            deviceId?.let {
+                cSync(context, it)
+            }
         }
     }
 
@@ -184,10 +188,13 @@ object ApiUtils {
         callback: () -> Unit
     ) {
         // The unity of connector token must already be checked here
-        val parameters = mutableMapOf(
-            "deviceId" to getDeviceId(context)!!,
-            "appName" to appName
-        )
+        val parameters = getDeviceId(context)?.let {
+            mutableMapOf(
+                "deviceId" to it,
+                "appName" to appName
+            )
+        } ?: return
+
         mApi.createApp(parameters)
             ?.subscribeOn(Schedulers.newThread())
             ?.observeOn(Schedulers.newThread())

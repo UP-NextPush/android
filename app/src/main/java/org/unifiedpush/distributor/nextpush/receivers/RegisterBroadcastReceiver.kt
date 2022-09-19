@@ -40,7 +40,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
         wakeLock?.acquire(30000L /*30 secs*/)
-        when (intent!!.action) {
+        when (intent?.action) {
             ACTION_REGISTER ->{
                 Log.i(TAG,"REGISTER")
                 val connectorToken = intent.getStringExtra(EXTRA_TOKEN)?: ""
@@ -49,7 +49,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     Log.w(TAG,"Trying to register an app without packageName")
                     return
                 }
-                when (checkToken(context!!, connectorToken, application)) {
+                when (checkToken(context, connectorToken, application)) {
                     TOKEN_REGISTERED_OK -> sendEndpoint(context.applicationContext, connectorToken)
                     TOKEN_NOK -> sendRegistrationFailed(
                         context,
@@ -84,7 +84,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
             ACTION_UNREGISTER ->{
                 Log.i(TAG,"UNREGISTER")
                 val connectorToken = intent.getStringExtra(EXTRA_TOKEN)?: ""
-                val application = getDb(context!!).getPackageName(connectorToken)
+                val application = getDb(context).getPackageName(connectorToken)
                 if (application.isBlank()) {
                     return
                 }

@@ -153,8 +153,11 @@ class StartService: Service(){
     private fun registerNetworkCallback() {
         Log.d(TAG, "Registering Network Callback")
         try {
-            connectivityManager = this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-            connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
+            connectivityManager = (
+                    this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+                    ).apply {
+                    registerDefaultNetworkCallback(networkCallback)
+                    }
         } catch (e: Exception) {
             e.printStackTrace()
         }
