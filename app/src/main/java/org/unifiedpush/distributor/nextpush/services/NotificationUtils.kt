@@ -3,13 +3,12 @@ package org.unifiedpush.distributor.nextpush.services
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import org.unifiedpush.distributor.nextpush.R
-import android.app.PendingIntent
-
-import android.content.Intent
 import org.unifiedpush.distributor.nextpush.activities.MainActivity
 
 const val NOTIFICATION_ID_FOREGROUND = 51115
@@ -42,8 +41,10 @@ object NotificationUtils {
         notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
         val intent = PendingIntent.getActivity(
-            context, 0,
-            notificationIntent, 0
+            context,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE
         )
 
         val builder: Notification.Builder =
@@ -88,8 +89,10 @@ object NotificationUtils {
         notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
         val intent = PendingIntent.getActivity(
-            context, 0,
-            notificationIntent, 0
+            context,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE
         )
 
         val builder: Notification.Builder = (

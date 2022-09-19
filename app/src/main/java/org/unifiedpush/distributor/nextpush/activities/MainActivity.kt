@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         try {
             AccountImporter.onActivityResult(
@@ -75,7 +76,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 showMain()
             }
-        } catch (e: AccountImportCancelledException) {}
+        } catch (_: AccountImportCancelledException) {}
         super.onActivityResult(requestCode, resultCode, data)
     }
 
