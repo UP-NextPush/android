@@ -1,0 +1,3 @@
+Bump dependencies
+Target SDK 33
+Avoid failures
