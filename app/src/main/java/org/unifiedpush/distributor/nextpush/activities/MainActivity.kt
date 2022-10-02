@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -104,19 +105,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { granted ->
-                if (!granted &&
-                    shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                    AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.no_notification_dialog_title))
-                        .setMessage(R.string.no_notification_dialog_message)
-                        .show()
-                }
-            } .launch(
-                Manifest.permission.POST_NOTIFICATIONS
-            )
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Requesting POST_NOTIFICATIONS permission")
+                registerForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    Log.d(TAG, "POST_NOTIFICATIONS permission granted: $granted")
+                    if (granted) {
+                        restart()
+                    } else {
+                        if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                            Log.d(TAG, "Show POST_NOTIFICATIONS permission rationale")
+                            AlertDialog.Builder(this)
+                                .setTitle(getString(R.string.no_notification_dialog_title))
+                                .setMessage(R.string.no_notification_dialog_message)
+                                .show()
+                        }
+                    }
+                }.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
         }
     }
 
