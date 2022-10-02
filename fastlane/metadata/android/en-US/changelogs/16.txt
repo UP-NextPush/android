@@ -1,0 +1,3 @@
+* Reduce build size
+* Avoid a null pointer exception
+* Restart service when POST_NOTIFICATIONS is granted
