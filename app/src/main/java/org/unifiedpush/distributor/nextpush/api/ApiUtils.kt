@@ -32,22 +32,22 @@ object ApiUtils {
     val createQueue = emptyList<String>().toMutableList()
     val delQueue = emptyList<String>().toMutableList()
 
-    private lateinit var mApi: ProviderApi
-    private lateinit var nextcloudAPI: NextcloudAPI
-    private lateinit var factory: EventSource.Factory
-    private lateinit var source: EventSource
+    private var mApi: ProviderApi? = null
+    private var nextcloudAPI: NextcloudAPI? = null
+    private var source: EventSource? = null
 
     fun apiDestroy() {
-        if (::nextcloudAPI.isInitialized)
-            nextcloudAPI.stop()
-        if (::source.isInitialized)
-            source.cancel()
+        nextcloudAPI?.stop()
+        source?.cancel()
+        nextcloudAPI = null
+        source = null
+        mApi = null
     }
 
     private fun cApi(context: Context, callback: () -> Unit) {
-        if (::mApi.isInitialized and ::nextcloudAPI.isInitialized) {
+        mApi?.let {
             callback()
-        } else {
+        } ?: run {
             val nCallback = object : NextcloudAPI.ApiConnectedListener {
                 override fun onConnected() {
                     Log.d(TAG, "Api connected.")
@@ -58,9 +58,11 @@ object ApiUtils {
                     Log.d(TAG, "Cannot connect to API: ex = [$ex]")
                 }
             }
-            nextcloudAPI = NextcloudAPI(context, ssoAccount, GsonBuilder().create(), nCallback)
-            mApi = NextcloudRetrofitApiBuilder(nextcloudAPI, mApiEndpoint)
-                .create(ProviderApi::class.java)
+            NextcloudAPI(context, ssoAccount, GsonBuilder().create(), nCallback).let {
+                nextcloudAPI = it
+                mApi = NextcloudRetrofitApiBuilder(it, mApiEndpoint)
+                    .create(ProviderApi::class.java)
+            }
         }
     }
 
@@ -75,7 +77,7 @@ object ApiUtils {
             Log.d(TAG, "No deviceId found.")
             val parameters: MutableMap<String, String> = HashMap()
             parameters["deviceName"] = Build.MODEL
-            mApi.createDevice(parameters)
+            mApi?.createDevice(parameters)
                 ?.subscribeOn(Schedulers.newThread())
                 ?.observeOn(Schedulers.newThread())
                 ?.subscribe(object : Observer<ApiResponse?> {
@@ -124,8 +126,7 @@ object ApiUtils {
             .get()
             .build()
 
-        factory = EventSources.createFactory(client)
-        source = factory.newEventSource(request, SSEListener(context))
+        source = EventSources.createFactory(client).newEventSource(request, SSEListener(context))
         Log.d(TAG, "cSync done.")
     }
 
@@ -139,9 +140,9 @@ object ApiUtils {
     }
 
     private fun cDeleteDevice(context: Context) {
-        val deviceId = getDeviceId(context)
+        val deviceId = getDeviceId(context) ?: return
 
-        mApi.deleteDevice(deviceId)
+        mApi?.deleteDevice(deviceId)
             ?.subscribeOn(Schedulers.newThread())
             ?.observeOn(Schedulers.newThread())
             ?.subscribe(object : Observer<ApiResponse?> {
@@ -195,7 +196,7 @@ object ApiUtils {
             )
         } ?: return
 
-        mApi.createApp(parameters)
+        mApi?.createApp(parameters)
             ?.subscribeOn(Schedulers.newThread())
             ?.observeOn(Schedulers.newThread())
             ?.subscribe(object : Observer<ApiResponse?> {
@@ -240,7 +241,7 @@ object ApiUtils {
 
     private fun cDeleteApp(context: Context, connectorToken: String, callback: () -> Unit) {
         val appToken = getDb(context).getAppToken(connectorToken)
-        mApi.deleteApp(appToken)
+        mApi?.deleteApp(appToken)
             ?.subscribeOn(Schedulers.newThread())
             ?.observeOn(Schedulers.newThread())
             ?.subscribe(object : Observer<ApiResponse?> {
