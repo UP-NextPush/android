@@ -11,8 +11,8 @@ android {
         applicationId "org.unifiedpush.distributor.nextpush"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 16
-        versionName "1.4.1"
+        versionCode 17
+        versionName "1.4.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -20,8 +20,6 @@ android {
     buildTypes {
         release {
             resValue "string", "app_name", "NextPush"
-            minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
