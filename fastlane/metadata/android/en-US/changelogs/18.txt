@@ -1,0 +1,3 @@
+- Add themed icon for Android 13
+- Set different notification channel names
+- Update dependencies
