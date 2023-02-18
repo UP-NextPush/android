@@ -2,24 +2,22 @@ package org.unifiedpush.distributor.nextpush.services
 
 import android.content.Context
 import android.util.Base64
-import okhttp3.sse.EventSourceListener
-import okhttp3.sse.EventSource
 import android.util.Log
-import okhttp3.Response
-import java.lang.Exception
 import com.google.gson.Gson
-import org.unifiedpush.distributor.nextpush.api.SSEResponse
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendMessage
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
-import java.util.*
+import okhttp3.Response
+import okhttp3.sse.EventSource
+import okhttp3.sse.EventSourceListener
+import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromAppToken
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
+import org.unifiedpush.distributor.nextpush.utils.TAG
+import java.lang.Exception
+import java.util.Calendar
 
-private const val TAG = "SSEListener"
-
-class SSEListener (val context: Context) : EventSourceListener() {
+class SSEListener(val context: Context) : EventSourceListener() {
 
     companion object {
-        var lastEventDate : Calendar? = null
+        var lastEventDate: Calendar? = null
         var keepalive = 900
     }
 
@@ -58,12 +56,7 @@ class SSEListener (val context: Context) : EventSourceListener() {
             }
             "deleteApp" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
-                val db = getDb(context.applicationContext)
-                val connectorToken = db.getConnectorToken(message.token)
-                if (connectorToken.isEmpty())
-                    return
-                sendUnregistered(context.applicationContext, connectorToken)
-                db.unregisterApp(connectorToken)
+                deleteAppFromAppToken(context, message.token)
             }
         }
         StartService.wakeLock?.let {
@@ -74,16 +67,18 @@ class SSEListener (val context: Context) : EventSourceListener() {
     }
 
     override fun onClosed(eventSource: EventSource) {
-        if (!StartService.isServiceStarted)
+        if (!StartService.isServiceStarted) {
             return
+        }
         Log.d(TAG, "onClosed: $eventSource")
         StartService.newFail(context, eventSource)
         RestartWorker.start(context, delay = 0)
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-        if (!StartService.isServiceStarted)
+        if (!StartService.isServiceStarted) {
             return
+        }
         Log.d(TAG, "onFailure")
         t?.let {
             Log.d(TAG, "An error occurred: $t")
@@ -93,12 +88,12 @@ class SSEListener (val context: Context) : EventSourceListener() {
         }
         StartService.newFail(context, eventSource)
         val delay = when (StartService.nFails) {
-            1 -> 2          // 2sec
-            2 -> 20         // 20sec
-            3 -> 60         // 1min
-            4 -> 300        // 5min
-            5 -> 600        // 10min
-            else -> return  // else keep the worker with its 16min
+            1 -> 2 // 2sec
+            2 -> 20 // 20sec
+            3 -> 60 // 1min
+            4 -> 300 // 5min
+            5 -> 600 // 10min
+            else -> return // else keep the worker with its 16min
         }.toLong()
         Log.d(TAG, "Retrying in $delay s")
         RestartWorker.start(context, delay = delay)

@@ -13,12 +13,12 @@ private const val FIELD_PACKAGE_NAME = "packageName"
 private const val FIELD_CONNECTOR_TOKEN = "connectorToken"
 private const val FIELD_APP_TOKEN = "appToken"
 private const val CREATE_TABLE_APPS = "CREATE TABLE apps (" +
-        "$FIELD_PACKAGE_NAME TEXT," +
-        "$FIELD_CONNECTOR_TOKEN TEXT," +
-        "$FIELD_APP_TOKEN TEXT," +
-        "PRIMARY KEY ($FIELD_CONNECTOR_TOKEN));"
+    "$FIELD_PACKAGE_NAME TEXT," +
+    "$FIELD_CONNECTOR_TOKEN TEXT," +
+    "$FIELD_APP_TOKEN TEXT," +
+    "PRIMARY KEY ($FIELD_CONNECTOR_TOKEN));"
 
-class MessagingDatabase(context: Context):
+class ConnectionsDatabase(context: Context) :
     SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -51,19 +51,19 @@ class MessagingDatabase(context: Context):
         val selection = "$FIELD_PACKAGE_NAME = ? AND $FIELD_CONNECTOR_TOKEN = ?"
         val selectionArgs = arrayOf(packageName, connectorToken)
         return db.query(
-                TABLE_APPS,
-                null,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                null
+            TABLE_APPS,
+            null,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
         ).use { cursor ->
             (cursor != null && cursor.count > 0)
         }
     }
 
-    fun getPackageName(connectorToken: String): String {
+    fun getPackageName(connectorToken: String): String? {
         val db = readableDatabase
         val projection = arrayOf(FIELD_PACKAGE_NAME)
         val selection = "$FIELD_CONNECTOR_TOKEN = ?"
@@ -78,11 +78,11 @@ class MessagingDatabase(context: Context):
             null
         ).use { cursor ->
             val column = cursor.getColumnIndex(FIELD_PACKAGE_NAME)
-            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else ""
+            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else null
         }
     }
 
-    fun getAppToken(connectorToken: String): String {
+    fun getAppToken(connectorToken: String): String? {
         val db = readableDatabase
         val projection = arrayOf(FIELD_APP_TOKEN)
         val selection = "$FIELD_CONNECTOR_TOKEN = ?"
@@ -97,11 +97,11 @@ class MessagingDatabase(context: Context):
             null
         ).use { cursor ->
             val column = cursor.getColumnIndex(FIELD_APP_TOKEN)
-            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else ""
+            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else null
         }
     }
 
-    fun getConnectorToken(appToken: String): String {
+    fun getConnectorToken(appToken: String): String? {
         val db = readableDatabase
         val projection = arrayOf(FIELD_CONNECTOR_TOKEN)
         val selection = "$FIELD_APP_TOKEN = ?"
@@ -116,7 +116,7 @@ class MessagingDatabase(context: Context):
             null
         ).use { cursor ->
             val column = cursor.getColumnIndex(FIELD_CONNECTOR_TOKEN)
-            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else ""
+            if (cursor.moveToFirst() && column >= 0) cursor.getString(column) else null
         }
     }
 
@@ -131,11 +131,12 @@ class MessagingDatabase(context: Context):
             null,
             null,
             null
-        ).use{ cursor ->
+        ).use { cursor ->
             generateSequence { if (cursor.moveToNext()) cursor else null }
-                .mapNotNull{
+                .mapNotNull {
                     val column = cursor.getColumnIndex(FIELD_CONNECTOR_TOKEN)
-                    if (column >= 0) it.getString(column) else null }
+                    if (column >= 0) it.getString(column) else null
+                }
                 .toList()
         }
     }

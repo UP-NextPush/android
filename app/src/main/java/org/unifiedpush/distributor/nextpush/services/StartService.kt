@@ -3,41 +3,37 @@ package org.unifiedpush.distributor.nextpush.services
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.ConnectivityManager.NetworkCallback
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
-
 import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
 import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
-
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
-
-import android.net.Network
-
-import android.net.ConnectivityManager
-import android.net.ConnectivityManager.NetworkCallback
-import android.net.NetworkCapabilities
 import okhttp3.sse.EventSource
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDestroy
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiSync
-import org.unifiedpush.distributor.nextpush.services.NotificationUtils.createForegroundNotification
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
+import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
+import org.unifiedpush.distributor.nextpush.api.Api.apiDestroy
+import org.unifiedpush.distributor.nextpush.api.Api.apiSync
+import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createForegroundNotification
+import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 
-private const val TAG = "StartService"
+class StartService : Service() {
 
-class StartService: Service(){
-
-    companion object: FailureHandler {
+    companion object : FailureHandler {
         private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
         const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
 
         var isServiceStarted = false
         var wakeLock: PowerManager.WakeLock? = null
 
-        fun startListener(context: Context){
+        fun startListener(context: Context) {
             if (isServiceStarted && !hasFailed()) return
             Log.d(TAG, "Starting the Listener")
             Log.d(TAG, "Service is started: $isServiceStarted")
@@ -45,7 +41,7 @@ class StartService: Service(){
             val serviceIntent = Intent(context, StartService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
-            }else{
+            } else {
                 context.startService(serviceIntent)
             }
         }
@@ -59,9 +55,9 @@ class StartService: Service(){
         return null
     }
 
-    override fun onCreate(){
+    override fun onCreate() {
         super.onCreate()
-        Log.i(TAG,"StartService created")
+        Log.i(TAG, "StartService created")
         val notification = createForegroundNotification(this)
         startForeground(NOTIFICATION_ID_FOREGROUND, notification)
     }
@@ -124,12 +120,13 @@ class StartService: Service(){
             }
         }
 
-        apiSync(this)
+        apiSync()
     }
 
     private var connectivityManager = null as ConnectivityManager?
 
     private val networkCallback = object : NetworkCallback() {
+        val TAG = this@StartService.TAG
         override fun onAvailable(network: Network) {
             Log.d(TAG, "Network is CONNECTED")
             if (StartService.hasFailed(twice = true, orNeverStart = false)) {
@@ -154,13 +151,12 @@ class StartService: Service(){
         Log.d(TAG, "Registering Network Callback")
         try {
             connectivityManager = (
-                    this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-                    ).apply {
-                    registerDefaultNetworkCallback(networkCallback)
-                    }
+                this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+                ).apply {
+                registerDefaultNetworkCallback(networkCallback)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 }
-

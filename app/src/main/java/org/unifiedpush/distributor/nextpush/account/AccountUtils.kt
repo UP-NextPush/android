@@ -2,6 +2,9 @@ package org.unifiedpush.distributor.nextpush.account
 
 import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.net.Uri
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
@@ -16,12 +19,8 @@ import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
 import com.nextcloud.android.sso.model.SingleSignOnAccount
 import com.nextcloud.android.sso.ui.UiExceptionManager
-import android.content.DialogInterface
-import android.content.Intent
-import android.net.Uri
 import org.unifiedpush.distributor.nextpush.R
-
-private const val TAG = "AccountUtils"
+import org.unifiedpush.distributor.nextpush.utils.TAG
 
 private const val PREF_NAME = "NextPush"
 private const val PREF_DEVICE_ID = "deviceId"
@@ -99,7 +98,7 @@ object AccountUtils {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(PREF_DEVICE_ID, deviceId)
-            .commit()
+            .apply()
     }
 
     fun getDeviceId(context: Context): String? {
@@ -111,14 +110,14 @@ object AccountUtils {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(PREF_DEVICE_ID)
-            .commit()
+            .apply()
     }
 
     fun saveUrl(context: Context, url: String) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(PREF_URL, url)
-            .commit()
+            .apply()
     }
 
     fun getUrl(context: Context): String? {
@@ -130,6 +129,6 @@ object AccountUtils {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(PREF_URL)
-            .commit()
+            .apply()
     }
 }

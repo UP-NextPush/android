@@ -1,4 +1,4 @@
-package org.unifiedpush.distributor.nextpush.services
+package org.unifiedpush.distributor.nextpush.utils
 
 import android.Manifest
 import android.app.Notification
@@ -50,10 +50,14 @@ object NotificationUtils {
         )
 
         val builder: Notification.Builder =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(
-                context,
-                notificationChannelId
-            ) else Notification.Builder(context)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(
+                    context,
+                    notificationChannelId
+                )
+            } else {
+                Notification.Builder(context)
+            }
 
         return builder
             .setContentTitle(context.getString(R.string.app_name))
@@ -67,8 +71,9 @@ object NotificationUtils {
     }
 
     fun createWarningNotification(context: Context) {
-        if (warningShown)
+        if (warningShown) {
             return
+        }
         val notificationChannelId = "${context.getString(R.string.app_name)}.Warning"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -97,12 +102,15 @@ object NotificationUtils {
         )
 
         val builder: Notification.Builder = (
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(
                     context,
                     notificationChannelId
                 )
-                else Notification.Builder(context)
-                ).setContentTitle(context.getString(R.string.app_name))
+            } else {
+                Notification.Builder(context)
+            }
+            ).setContentTitle(context.getString(R.string.app_name))
             .setContentText(context.getString(R.string.warning_notif_description))
             .setSmallIcon(R.drawable.ic_launcher_notification)
             .setTicker(context.getString(R.string.warning_notif_ticker))

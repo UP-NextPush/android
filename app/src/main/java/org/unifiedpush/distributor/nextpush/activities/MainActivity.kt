@@ -12,36 +12,35 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.*
+import android.widget.* // ktlint-disable no-wildcard-imports
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.nextcloud.android.sso.AccountImporter
-import com.nextcloud.android.sso.ui.UiExceptionManager
-
-import com.nextcloud.android.sso.helper.SingleAccountHelper
-
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.AccountImporter.clearAllAuthTokens
-import com.nextcloud.android.sso.exceptions.*
+import com.nextcloud.android.sso.exceptions.AccountImportCancelledException
+import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
+import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
+import com.nextcloud.android.sso.helper.SingleAccountHelper
+import com.nextcloud.android.sso.ui.UiExceptionManager
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.connect
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteApp
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteDevice
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
-import org.unifiedpush.distributor.nextpush.services.*
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteDevice
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
+import org.unifiedpush.distributor.nextpush.services.RestartWorker
+import org.unifiedpush.distributor.nextpush.services.StartService
+import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.String.format
-
-private const val TAG = "NextPush-MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var listView : ListView
+    private lateinit var listView: ListView
     private var showLogout = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,7 +105,8 @@ class MainActivity : AppCompatActivity() {
     private fun requestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 Log.d(TAG, "Requesting POST_NOTIFICATIONS permission")
                 registerForActivityResult(
                     ActivityResultContracts.RequestPermission()
@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if(hasFocus) {
+        if (hasFocus) {
             setListView()
         }
     }
@@ -175,7 +175,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun logout() {
         val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
-            this)
+            this
+        )
         alert.setTitle(getString(R.string.logout_alert_title))
         alert.setMessage(R.string.logout_alert_content)
         alert.setPositiveButton(R.string.ok) { dialog, _ ->
@@ -185,7 +186,7 @@ class MainActivity : AppCompatActivity() {
                 .edit()
                 .remove("PREF_CURRENT_ACCOUNT_STRING")
                 .apply()
-            apiDeleteDevice(this)
+            deleteDevice(this)
             showStart()
             finish()
             startActivity(intent)
@@ -194,42 +195,46 @@ class MainActivity : AppCompatActivity() {
         alert.show()
     }
 
-    private fun setListView(){
+    private fun setListView() {
         listView = findViewById(R.id.applications_list)
-        val db = getDb(this)
-        val tokenList = db.listTokens().toMutableList()
-        val appList = emptyArray<String>().toMutableList()
-        tokenList.forEach {
-            appList.add(db.getPackageName(it))
+
+        val tokenList = emptyList<String>().toMutableList()
+        val appList = emptyList<String>().toMutableList()
+
+        getDb(this).let { db ->
+            db.listTokens().forEach {
+                tokenList.add(it)
+                appList.add(db.getPackageName(it) ?: it)
+            }
         }
+
         listView.adapter = ArrayAdapter(
-                this,
-                android.R.layout.simple_list_item_1,
-                appList
+            this,
+            android.R.layout.simple_list_item_1,
+            appList
         )
+
         listView.setOnItemLongClickListener(
-                fun(_: AdapterView<*>, _: View, position: Int, _: Long): Boolean {
-                    val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
-                            this)
-                    alert.setTitle("Unregistering")
-                    alert.setMessage("Are you sure to unregister ${appList[position]} ?")
-                    alert.setPositiveButton("YES") { dialog, _ ->
-                        val connectorToken = tokenList[position]
-                        sendUnregistered(this, connectorToken)
-                        val database = getDb(this)
-                        val appToken = database.getAppToken(connectorToken)
-                        database.unregisterApp(connectorToken)
-                        apiDeleteApp(this, appToken) {
-                            Log.d(TAG,"Unregistration is finished")
+            fun(_: AdapterView<*>, _: View, position: Int, _: Long): Boolean {
+                val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
+                    this
+                )
+                alert.setTitle("Unregistering")
+                alert.setMessage("Are you sure to unregister ${appList[position]} ?")
+                alert.setPositiveButton("YES") { dialog, _ ->
+                    val connectorToken = tokenList[position]
+                    deleteApp(this, connectorToken) {
+                        Log.d(TAG, "Unregistration is finished")
+                        this@MainActivity.runOnUiThread {
+                            setListView()
                         }
-                        tokenList.removeAt(position)
-                        appList.removeAt(position)
-                        dialog.dismiss()
                     }
-                    alert.setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
-                    alert.show()
-                    return true
+                    dialog.dismiss()
                 }
+                alert.setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
+                alert.show()
+                return true
+            }
         )
     }
 }

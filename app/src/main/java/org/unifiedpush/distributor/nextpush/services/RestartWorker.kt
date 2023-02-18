@@ -2,18 +2,18 @@ package org.unifiedpush.distributor.nextpush.services
 
 import android.content.Context
 import android.util.Log
-import androidx.work.*
+import androidx.work.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.keepalive
 import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.lastEventDate
+import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 private const val UNIQUE_WORK_TAG = "nextpush::RestartWorker::unique"
 
-class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
+class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
     companion object {
-        private const val TAG = "RestartWorker"
         fun start(context: Context, delay: Long? = null) {
             val work = PeriodicWorkRequestBuilder<RestartWorker>(16, TimeUnit.MINUTES)
             if (delay != null) {
@@ -42,7 +42,7 @@ class RestartWorker (ctx: Context, params: WorkerParameters) : Worker(ctx, param
                 StartService.setMaxFails(applicationContext) // Max, will keep using the current worker
                 StartService.startListener(applicationContext)
             }
-        }?:run {
+        } ?: run {
             Log.d(TAG, "Restarting")
             StartService.startListener(applicationContext)
         }

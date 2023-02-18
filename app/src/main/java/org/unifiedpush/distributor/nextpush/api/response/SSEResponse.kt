@@ -1,6 +1,6 @@
-package org.unifiedpush.distributor.nextpush.api
+package org.unifiedpush.distributor.nextpush.api.response
 
-data class SSEResponse (
+data class SSEResponse(
     val type: String = "",
     val token: String = "",
     val message: String = "",

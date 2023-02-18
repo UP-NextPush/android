@@ -6,33 +6,33 @@ import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiCreateApp
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.apiDeleteApp
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.createQueue
-import org.unifiedpush.distributor.nextpush.api.ApiUtils.delQueue
-
-import org.unifiedpush.distributor.nextpush.distributor.*
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_NEW
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_NOK
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.TOKEN_REGISTERED_OK
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.checkToken
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.getDb
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendEndpoint
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendRegistrationFailed
-import org.unifiedpush.distributor.nextpush.distributor.DistributorUtils.sendUnregistered
+import org.unifiedpush.distributor.nextpush.distributor.* // ktlint-disable no-wildcard-imports
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_NEW
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_NOK
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_REGISTERED_OK
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.checkToken
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.createApp
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendEndpoint
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendRegistrationFailed
+import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
+import java.util.Timer
+import kotlin.concurrent.schedule
 
 /**
  * THIS SERVICE IS USED BY OTHER APPS TO REGISTER
  */
 
-private const val TAG = "RegisterBroadcastReceiver"
+private val createQueue = emptyList<String>().toMutableList()
+private val delQueue = emptyList<String>().toMutableList()
 
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
         private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
-        private var wakeLock : PowerManager.WakeLock? = null
+        private var wakeLock: PowerManager.WakeLock? = null
     }
 
     override fun onReceive(context: Context, intent: Intent?) {
@@ -41,25 +41,27 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
         }
         wakeLock?.acquire(30000L /*30 secs*/)
         when (intent?.action) {
-            ACTION_REGISTER ->{
-                Log.i(TAG,"REGISTER")
-                val connectorToken = intent.getStringExtra(EXTRA_TOKEN)?: ""
-                val application = intent.getStringExtra(EXTRA_APPLICATION)?: ""
-                if (application.isBlank()) {
-                    Log.w(TAG,"Trying to register an app without packageName")
+            ACTION_REGISTER -> {
+                Log.i(TAG, "REGISTER")
+                val connectorToken = intent.getStringExtra(EXTRA_TOKEN) ?: run {
+                    Log.w(TAG, "Trying to register an app without connector token")
                     return
                 }
-                when (checkToken(context, connectorToken, application)) {
+                val application = intent.getStringExtra(EXTRA_APPLICATION) ?: run {
+                    Log.w(TAG, "Trying to register an app without packageName")
+                    return
+                }
+                when (checkToken(context.applicationContext, connectorToken, application)) {
                     TOKEN_REGISTERED_OK -> sendEndpoint(context.applicationContext, connectorToken)
                     TOKEN_NOK -> sendRegistrationFailed(
-                        context,
+                        context.applicationContext,
                         application,
                         connectorToken
                     )
                     TOKEN_NEW -> {
-                        if (!isConnected(context, showDialog = false)) {
+                        if (!isConnected(context.applicationContext, showDialog = false)) {
                             sendRegistrationFailed(
-                                context,
+                                context.applicationContext,
                                 application,
                                 connectorToken,
                                 message = "NextPush is not connected"
@@ -68,12 +70,14 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                         }
                         if (connectorToken !in createQueue) {
                             createQueue.add(connectorToken)
-                            apiCreateApp(
+                            delayRemove(createQueue, connectorToken)
+                            createApp(
                                 context.applicationContext,
                                 application,
                                 connectorToken
                             ) {
                                 sendEndpoint(context.applicationContext, connectorToken)
+                                createQueue.remove(connectorToken)
                             }
                         } else {
                             Log.d(TAG, "Already registering this token")
@@ -81,21 +85,18 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            ACTION_UNREGISTER ->{
-                Log.i(TAG,"UNREGISTER")
-                val connectorToken = intent.getStringExtra(EXTRA_TOKEN)?: ""
-                val application = getDb(context).getPackageName(connectorToken)
-                if (application.isBlank()) {
-                    return
-                }
+            ACTION_UNREGISTER -> {
+                Log.i(TAG, "UNREGISTER")
+                val connectorToken = intent.getStringExtra(EXTRA_TOKEN) ?: ""
+                getDb(context.applicationContext).getPackageName(connectorToken) ?: return
+
                 if (connectorToken !in delQueue) {
                     delQueue.add(connectorToken)
-                    sendUnregistered(context.applicationContext, connectorToken)
+                    delayRemove(delQueue, connectorToken)
                     try {
-                        apiDeleteApp(context.applicationContext, connectorToken) {
-                            val db = getDb(context.applicationContext)
-                            db.unregisterApp(connectorToken)
+                        deleteApp(context.applicationContext, connectorToken) {
                             Log.d(TAG, "Unregistration is finished")
+                            delQueue.remove(connectorToken)
                         }
                     } catch (e: Exception) {
                         Log.d(TAG, "Could not delete app")
@@ -109,6 +110,12 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
             if (it.isHeld) {
                 it.release()
             }
+        }
+    }
+
+    private fun delayRemove(list: MutableList<String>, token: String) {
+        Timer().schedule(1_000L /* 1sec */) {
+            list.remove(token)
         }
     }
 }

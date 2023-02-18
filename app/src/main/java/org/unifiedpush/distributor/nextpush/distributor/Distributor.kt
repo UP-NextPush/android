@@ -4,35 +4,35 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.getUrl
+import org.unifiedpush.distributor.nextpush.api.Api.apiCreateApp
+import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteApp
+import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteDevice
+import org.unifiedpush.distributor.nextpush.utils.TAG
 
 /**
  * These functions are used to send messages to other apps
  */
 
-private const val TAG = "DistributorUtils"
-
-object DistributorUtils {
+object Distributor {
 
     const val TOKEN_NEW = "token_new"
     const val TOKEN_REGISTERED_OK = "token_registered_ok"
     const val TOKEN_NOK = "token_nok"
 
-    private lateinit var db: MessagingDatabase
+    private lateinit var db: ConnectionsDatabase
 
-    fun getDb(context: Context): MessagingDatabase {
+    fun getDb(context: Context): ConnectionsDatabase {
         if (!this::db.isInitialized) {
-            db = MessagingDatabase(context)
+            db = ConnectionsDatabase(context)
         }
         return db
     }
 
     fun sendMessage(context: Context, appToken: String, message: ByteArray) {
         val db = getDb(context)
-        val connectorToken = db.getConnectorToken(appToken)
+        val connectorToken = db.getConnectorToken(appToken) ?: return
         val application = getApp(context, connectorToken)
-        if (application.isNullOrBlank()) {
-            return
-        }
+
         val broadcastIntent = Intent()
         broadcastIntent.`package` = application
         broadcastIntent.action = ACTION_MESSAGE
@@ -73,7 +73,7 @@ object DistributorUtils {
         context.sendBroadcast(broadcastIntent)
     }
 
-    fun sendUnregistered(context: Context, connectorToken: String) {
+    private fun sendUnregistered(context: Context, connectorToken: String) {
         val application = getApp(context, connectorToken)
         if (application.isNullOrBlank()) {
             return
@@ -88,10 +88,7 @@ object DistributorUtils {
     private fun getApp(context: Context, connectorToken: String): String? {
         val db = getDb(context)
         val app = db.getPackageName(connectorToken)
-        return app.ifBlank {
-            Log.w(TAG, "No app found for this token")
-            null
-        }
+        return app
     }
 
     private fun getEndpoint(context: Context, connectorToken: String): String {
@@ -109,5 +106,42 @@ object DistributorUtils {
             return TOKEN_REGISTERED_OK
         }
         return TOKEN_NOK
+    }
+
+    fun deleteDevice(context: Context) {
+        val db = getDb(context)
+        db.listTokens().forEach {
+            sendUnregistered(context, it)
+            db.unregisterApp(it)
+        }
+        context.apiDeleteDevice()
+    }
+
+    fun createApp(context: Context, appName: String, connectorToken: String, block: () -> Unit) {
+        context.apiCreateApp(appName) { nextpushToken ->
+            nextpushToken?.let {
+                getDb(context).registerApp(appName, connectorToken, it)
+            }
+            block()
+        }
+    }
+
+    fun deleteApp(context: Context, connectorToken: String, block: () -> Unit) {
+        sendUnregistered(context, connectorToken)
+        val db = getDb(context)
+        db.getAppToken(
+            connectorToken
+        )?.let { nextpushToken ->
+            context.apiDeleteApp(nextpushToken) {
+                db.unregisterApp(connectorToken)
+                block()
+            }
+        }
+    }
+
+    fun deleteAppFromAppToken(context: Context, appToken: String) {
+        getDb(context).getConnectorToken(appToken)?.let {
+            deleteApp(context, it) {}
+        }
     }
 }
