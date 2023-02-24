@@ -3,10 +3,6 @@ package org.unifiedpush.distributor.nextpush.services
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.ConnectivityManager.NetworkCallback
-import android.net.Network
-import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -22,7 +18,6 @@ import org.unifiedpush.distributor.nextpush.api.Api.apiSync
 import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createForegroundNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
-import java.lang.Exception
 
 class StartService : Service() {
 
@@ -49,7 +44,7 @@ class StartService : Service() {
         override var eventSource: EventSource? = null
     }
 
-    private var isCallbackRegistered = false
+    private val networkCallback = RestartNetworkCallback(this)
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -65,10 +60,7 @@ class StartService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "onStartCommand")
-        if (!isCallbackRegistered) {
-            isCallbackRegistered = true
-            registerNetworkCallback()
-        }
+        networkCallback.register()
         startService()
         // by returning this we make sure the service is restarted if the system kills the service
         return START_STICKY
@@ -90,8 +82,7 @@ class StartService : Service() {
         isServiceStarted = false
         clearFails()
         apiDestroy()
-        connectivityManager?.unregisterNetworkCallback(networkCallback)
-        isCallbackRegistered = false
+        networkCallback.unregister()
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -121,42 +112,5 @@ class StartService : Service() {
         }
 
         apiSync()
-    }
-
-    private var connectivityManager = null as ConnectivityManager?
-
-    private val networkCallback = object : NetworkCallback() {
-        val TAG = this@StartService.TAG
-        override fun onAvailable(network: Network) {
-            Log.d(TAG, "Network is CONNECTED")
-            if (StartService.hasFailed(twice = true, orNeverStart = false)) {
-                Log.d(TAG, "networkCallback: restarting worker")
-                RestartWorker.start(this@StartService, delay = 0)
-            }
-        }
-
-        override fun onCapabilitiesChanged(
-            network: Network,
-            networkCapabilities: NetworkCapabilities
-        ) {
-            Log.d(TAG, "Network Capabilities changed")
-            if (StartService.hasFailed(twice = true, orNeverStart = false)) {
-                Log.d(TAG, "networkCallback: restarting worker")
-                RestartWorker.start(this@StartService, delay = 0)
-            } // else, it retries in max 2sec
-        }
-    }
-
-    private fun registerNetworkCallback() {
-        Log.d(TAG, "Registering Network Callback")
-        try {
-            connectivityManager = (
-                this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-                ).apply {
-                registerDefaultNetworkCallback(networkCallback)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 }
