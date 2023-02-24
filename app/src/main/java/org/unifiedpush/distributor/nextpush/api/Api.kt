@@ -21,7 +21,6 @@ import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.m
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProviderFactory
 import org.unifiedpush.distributor.nextpush.api.provider.ApiSSOFactory
 import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
-import org.unifiedpush.distributor.nextpush.services.SSEListener
 import java.util.concurrent.TimeUnit
 
 object Api {

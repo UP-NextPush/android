@@ -1,4 +1,4 @@
-package org.unifiedpush.distributor.nextpush.services
+package org.unifiedpush.distributor.nextpush.api
 
 import android.content.Context
 import android.util.Base64

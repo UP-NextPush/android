@@ -3,8 +3,8 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import androidx.work.* // ktlint-disable no-wildcard-imports
-import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.keepalive
-import org.unifiedpush.distributor.nextpush.services.SSEListener.Companion.lastEventDate
+import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.keepalive
+import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.util.*
 import java.util.concurrent.TimeUnit
