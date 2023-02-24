@@ -1,10 +1,7 @@
 package org.unifiedpush.distributor.nextpush.activities
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -161,16 +158,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun restart() {
         Log.d(TAG, "Restarting the Listener")
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(p0: Context?, p1: Intent?) {
-                RestartWorker.start(this@MainActivity, delay = 0)
-            }
+        StartService.service?.stopService {
+            RestartWorker.start(this, delay = 0)
         }
-        val intentFilter = IntentFilter(StartService.SERVICE_STOPPED_ACTION)
-        registerReceiver(receiver, intentFilter)
-        StartService.isServiceStarted = false
-        val serviceIntent = Intent(this, StartService::class.java)
-        this.stopService(serviceIntent)
     }
 
     private fun logout() {

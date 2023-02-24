@@ -28,8 +28,8 @@ class StartService : Service() {
 
     companion object : FailureHandler {
         private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
-        const val SERVICE_STOPPED_ACTION = "org.unifiedpush.distributor.nextpush.services.STOPPED"
 
+        var service: StartService? = null
         var isServiceStarted = false
         var wakeLock: PowerManager.WakeLock? = null
 
@@ -57,6 +57,7 @@ class StartService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        service = this
         Log.i(TAG, "StartService created")
         val notification = createForegroundNotification(this)
         startForeground(NOTIFICATION_ID_FOREGROUND, notification)
@@ -84,7 +85,7 @@ class StartService : Service() {
         }
     }
 
-    private fun stopService() {
+    fun stopService(block: () -> Unit = {}) {
         Log.d(TAG, "Stopping Service")
         isServiceStarted = false
         clearFails()
@@ -96,9 +97,8 @@ class StartService : Service() {
                 it.release()
             }
         }
-        val i = Intent(SERVICE_STOPPED_ACTION)
-        sendBroadcast(i)
         stopSelf()
+        block()
     }
 
     private fun startService() {
