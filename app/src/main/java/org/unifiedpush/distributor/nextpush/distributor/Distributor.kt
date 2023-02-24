@@ -139,9 +139,11 @@ object Distributor {
         }
     }
 
-    fun deleteAppFromAppToken(context: Context, appToken: String) {
-        getDb(context).getConnectorToken(appToken)?.let {
-            deleteApp(context, it) {}
+    fun deleteAppFromSSE(context: Context, appToken: String) {
+        val db = getDb(context)
+        db.getConnectorToken(appToken)?.let { connectorToken ->
+            sendUnregistered(context, connectorToken)
+            db.unregisterApp(connectorToken)
         }
     }
 }

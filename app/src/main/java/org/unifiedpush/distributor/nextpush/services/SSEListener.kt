@@ -8,7 +8,7 @@ import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
-import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromAppToken
+import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
@@ -56,7 +56,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             }
             "deleteApp" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
-                deleteAppFromAppToken(context, message.token)
+                deleteAppFromSSE(context, message.token)
             }
         }
         StartService.wakeLock?.let {
