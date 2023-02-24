@@ -7,12 +7,13 @@ import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createWarnin
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.deleteWarningNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
-interface FailureHandler {
+object FailureHandler {
 
-    var nFails: Int
+    var nFails = 0
+        private set
 
     // This is the last eventSource opened
-    var eventSource: EventSource?
+    private var eventSource: EventSource? = null
 
     fun newEventSource(context: Context, eventSource: EventSource) {
         Log.d(TAG, "newEvent/Eventsource: $eventSource")
@@ -23,7 +24,8 @@ interface FailureHandler {
 
     fun newFail(context: Context, eventSource: EventSource?) {
         Log.d(TAG, "newFail/Eventsource: $eventSource")
-        // no eventSource or the last opened
+        // ignore fails from a possible old eventSource
+        // if we are already reconnected
         if (this.eventSource == null || this.eventSource == eventSource) {
             Log.d(TAG, "EventSource is known or null")
             nFails++

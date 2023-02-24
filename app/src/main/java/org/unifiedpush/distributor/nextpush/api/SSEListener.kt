@@ -10,6 +10,9 @@ import okhttp3.sse.EventSourceListener
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
+import org.unifiedpush.distributor.nextpush.services.FailureHandler
+import org.unifiedpush.distributor.nextpush.services.RestartWorker
+import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
@@ -22,7 +25,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
     }
 
     override fun onOpen(eventSource: EventSource, response: Response) {
-        StartService.newEventSource(context, eventSource)
+        FailureHandler.newEventSource(context, eventSource)
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -71,7 +74,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             return
         }
         Log.d(TAG, "onClosed: $eventSource")
-        StartService.newFail(context, eventSource)
+        FailureHandler.newFail(context, eventSource)
         RestartWorker.start(context, delay = 0)
     }
 
@@ -86,8 +89,8 @@ class SSEListener(val context: Context) : EventSourceListener() {
         response?.let {
             Log.d(TAG, "onFailure: ${it.code}")
         }
-        StartService.newFail(context, eventSource)
-        val delay = when (StartService.nFails) {
+        FailureHandler.newFail(context, eventSource)
+        val delay = when (FailureHandler.nFails) {
             1 -> 2 // 2sec
             2 -> 20 // 20sec
             3 -> 60 // 1min

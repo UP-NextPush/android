@@ -14,7 +14,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
 
     override fun onAvailable(network: Network) {
         Log.d(TAG, "Network is CONNECTED")
-        if (StartService.hasFailed(twice = true, orNeverStart = false)) {
+        if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
             Log.d(TAG, "networkCallback: restarting worker")
             RestartWorker.start(context, delay = 0)
         }
@@ -25,7 +25,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         networkCapabilities: NetworkCapabilities
     ) {
         Log.d(TAG, "Network Capabilities changed")
-        if (StartService.hasFailed(twice = true, orNeverStart = false)) {
+        if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
             Log.d(TAG, "networkCallback: restarting worker")
             RestartWorker.start(context, delay = 0)
         } // else, it retries in max 2sec

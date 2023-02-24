@@ -21,7 +21,7 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class StartService : Service() {
 
-    companion object : FailureHandler {
+    companion object {
         private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
 
         var service: StartService? = null
@@ -29,10 +29,10 @@ class StartService : Service() {
         var wakeLock: PowerManager.WakeLock? = null
 
         fun startListener(context: Context) {
-            if (isServiceStarted && !hasFailed()) return
+            if (isServiceStarted && !FailureHandler.hasFailed()) return
             Log.d(TAG, "Starting the Listener")
             Log.d(TAG, "Service is started: $isServiceStarted")
-            Log.d(TAG, "nFails: $nFails")
+            Log.d(TAG, "nFails: $FailureHandler.nFails")
             val serviceIntent = Intent(context, StartService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
@@ -40,8 +40,6 @@ class StartService : Service() {
                 context.startService(serviceIntent)
             }
         }
-        override var nFails = 0
-        override var eventSource: EventSource? = null
     }
 
     private val networkCallback = RestartNetworkCallback(this)
@@ -80,7 +78,7 @@ class StartService : Service() {
     fun stopService(block: () -> Unit = {}) {
         Log.d(TAG, "Stopping Service")
         isServiceStarted = false
-        clearFails()
+        FailureHandler.clearFails()
         apiDestroy()
         networkCallback.unregister()
         wakeLock?.let {
@@ -93,7 +91,7 @@ class StartService : Service() {
     }
 
     private fun startService() {
-        if (isServiceStarted && !hasFailed()) return
+        if (isServiceStarted && !FailureHandler.hasFailed()) return
         isServiceStarted = true
 
         try {
