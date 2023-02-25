@@ -14,6 +14,7 @@ import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNot
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.Api.apiDestroy
 import org.unifiedpush.distributor.nextpush.api.Api.apiSync
+import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createForegroundNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
@@ -105,6 +106,7 @@ class StartService : Service() {
         fun stopService(block: () -> Unit = {}) {
             Log.d(TAG, "Stopping Service")
             isServiceStarted = false
+            lastEventDate = null
             service?.stopSelf()
             block()
         }
