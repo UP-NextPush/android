@@ -108,13 +108,13 @@ object Distributor {
         return TOKEN_NOK
     }
 
-    fun deleteDevice(context: Context) {
+    fun deleteDevice(context: Context, block: () -> Unit = {}) {
         val db = getDb(context)
         db.listTokens().forEach {
             sendUnregistered(context, it)
             db.unregisterApp(it)
         }
-        context.apiDeleteDevice()
+        context.apiDeleteDevice(block)
     }
 
     fun createApp(context: Context, appName: String, connectorToken: String, block: () -> Unit) {

@@ -106,7 +106,7 @@ object Api {
         Log.d(TAG, "cSync done.")
     }
 
-    fun Context.apiDeleteDevice() {
+    fun Context.apiDeleteDevice(block: () -> Unit = {}) {
         val deviceId = getDeviceId(this) ?: return
 
         withApiProvider { apiProvider ->
@@ -132,6 +132,7 @@ object Api {
 
                     override fun onComplete() {
                         removeUrl(this@apiDeleteDevice)
+                        block()
                     }
                 })
             removeDeviceId(this)
