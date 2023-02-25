@@ -20,36 +20,6 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class StartService : Service() {
 
-    companion object StartServiceCompanion {
-        private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
-
-        private var service: StartService? = null
-        var isServiceStarted = false
-            private set
-        var wakeLock: PowerManager.WakeLock? = null
-            private set
-
-        fun startListener(context: Context) {
-            if (isServiceStarted && !FailureHandler.hasFailed()) return
-            Log.d(TAG, "Starting the Listener")
-            Log.d(TAG, "Service is started: $isServiceStarted")
-            Log.d(TAG, "nFails: ${FailureHandler.nFails}")
-            val serviceIntent = Intent(context, StartService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
-        }
-
-        fun stopService(block: () -> Unit = {}) {
-            Log.d(TAG, "Stopping Service")
-            isServiceStarted = false
-            service?.stopSelf()
-            block()
-        }
-    }
-
     private val networkCallback = RestartNetworkCallback(this)
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -108,5 +78,35 @@ class StartService : Service() {
         }
 
         apiSync()
+    }
+
+    companion object StartServiceCompanion {
+        private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
+
+        private var service: StartService? = null
+        var isServiceStarted = false
+            private set
+        var wakeLock: PowerManager.WakeLock? = null
+            private set
+
+        fun startListener(context: Context) {
+            if (isServiceStarted && !FailureHandler.hasFailed()) return
+            Log.d(TAG, "Starting the Listener")
+            Log.d(TAG, "Service is started: $isServiceStarted")
+            Log.d(TAG, "nFails: ${FailureHandler.nFails}")
+            val serviceIntent = Intent(context, StartService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        }
+
+        fun stopService(block: () -> Unit = {}) {
+            Log.d(TAG, "Stopping Service")
+            isServiceStarted = false
+            service?.stopSelf()
+            block()
+        }
     }
 }

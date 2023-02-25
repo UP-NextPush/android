@@ -19,11 +19,6 @@ import java.util.Calendar
 
 class SSEListener(val context: Context) : EventSourceListener() {
 
-    companion object {
-        var lastEventDate: Calendar? = null
-        var keepalive = 900
-    }
-
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         StartService.wakeLock?.let {
@@ -100,5 +95,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
         }.toLong()
         Log.d(TAG, "Retrying in $delay s")
         RestartWorker.start(context, delay = delay)
+    }
+
+    companion object {
+        var lastEventDate: Calendar? = null
+        var keepalive = 900
+            private set
     }
 }

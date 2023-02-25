@@ -30,10 +30,7 @@ private val delQueue = emptyList<String>().toMutableList()
 
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
-    companion object {
-        private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
-        private var wakeLock: PowerManager.WakeLock? = null
-    }
+    private val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
 
     override fun onReceive(context: Context, intent: Intent?) {
         wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -117,5 +114,9 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
         Timer().schedule(1_000L /* 1sec */) {
             list.remove(token)
         }
+    }
+
+    companion object {
+        private var wakeLock: PowerManager.WakeLock? = null
     }
 }
