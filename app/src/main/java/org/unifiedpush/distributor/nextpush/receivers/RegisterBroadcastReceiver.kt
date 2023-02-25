@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
+import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.distributor.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_NEW
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_NOK
@@ -56,7 +56,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                         connectorToken
                     )
                     TOKEN_NEW -> {
-                        if (!isConnected(context.applicationContext, showDialog = false)) {
+                        if (!isConnected(context.applicationContext)) {
                             sendRegistrationFailed(
                                 context.applicationContext,
                                 application,

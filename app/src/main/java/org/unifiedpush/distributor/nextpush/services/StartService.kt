@@ -7,11 +7,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
-import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
-import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
-import com.nextcloud.android.sso.helper.SingleAccountHelper
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
+import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.Api.apiDestroy
 import org.unifiedpush.distributor.nextpush.api.Api.apiSync
 import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
@@ -61,15 +57,11 @@ class StartService : Service() {
         // If the service is running and we don't have any fail
         // In case somehow startService is called when everything is fine
         if (isServiceStarted && !FailureHandler.hasFailed()) return
-        isServiceStarted = true
-
-        try {
-            ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(this)
-        } catch (e: NextcloudFilesAppAccountNotFoundException) {
-            nextcloudAppNotInstalledDialog(this)
-        } catch (e: NoCurrentAccountSelectedException) {
+        getAccount(this) ?: run {
+            Log.d(TAG, "No account found")
             return
         }
+        isServiceStarted = true
 
         // we need this lock so our service gets not affected by Doze Mode
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run {

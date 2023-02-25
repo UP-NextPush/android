@@ -10,12 +10,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
+import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.getDeviceId
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.removeDeviceId
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.removeUrl
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.saveDeviceId
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.saveUrl
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProviderFactory
@@ -79,7 +79,8 @@ object Api {
                             }
 
                             override fun onComplete() {
-                                saveUrl(this@apiSync, "${ssoAccount.url}$mApiEndpoint")
+                                saveUrl(this@apiSync, "${getAccount(this@apiSync)?.url}$mApiEndpoint")
+
                                 // Sync once it is registered
                                 deviceId?.let {
                                     syncDevice(it)
@@ -96,7 +97,7 @@ object Api {
             .readTimeout(0, TimeUnit.SECONDS)
             .retryOnConnectionFailure(false)
             .build()
-        val url = "${ssoAccount.url}$mApiEndpoint/device/$deviceId"
+        val url = "${getAccount(this)?.url}$mApiEndpoint/device/$deviceId"
 
         val request = Request.Builder().url(url)
             .get()

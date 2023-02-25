@@ -1,6 +1,7 @@
 package org.unifiedpush.distributor.nextpush.activities
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -17,16 +18,9 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.AccountImporter.clearAllAuthTokens
-import com.nextcloud.android.sso.exceptions.AccountImportCancelledException
-import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
-import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
-import com.nextcloud.android.sso.helper.SingleAccountHelper
-import com.nextcloud.android.sso.ui.UiExceptionManager
 import org.unifiedpush.distributor.nextpush.R
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.connect
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.isConnected
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
+import org.unifiedpush.distributor.nextpush.account.Account.getAccount
+import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
@@ -40,54 +34,44 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var listView: ListView
     private var showLogout = false
+    private var onResult: ((activity: Activity, requestCode: Int, resultCode: Int, data: Intent?, block: (success: Boolean) -> Unit) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
         requestPermissions()
-        if (isConnected(this, showDialog = true)) {
+        if (isConnected(this)) {
             showMain()
         } else {
             findViewById<Button>(R.id.button_connection).setOnClickListener {
-                connect(this)
+                getAccount(this, uninitialized = true)?.let {
+                    onResult = { activity: Activity, i: Int, i1: Int, intent: Intent?, block: (success: Boolean) -> Unit ->
+                        it.onActivityResult(activity, i, i1, intent, block)
+                    }
+                    it.connect(this)
+                }
             }
             showStart()
         }
     }
 
-    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        try {
-            AccountImporter.onActivityResult(
-                requestCode,
-                resultCode,
-                data,
-                this
-            ) { account ->
-                val context = applicationContext
-
-                SingleAccountHelper.setCurrentAccount(context, account.name)
-
-                // Get the "default" account
-                try {
-                    ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
-                } catch (e: NextcloudFilesAppAccountNotFoundException) {
-                    nextcloudAppNotInstalledDialog(context)
-                } catch (e: NoCurrentAccountSelectedException) {
-                    UiExceptionManager.showDialogForException(context, e)
-                }
-                showMain()
-            }
-        } catch (_: AccountImportCancelledException) {}
         super.onActivityResult(requestCode, resultCode, data)
+        onResult?.let {
+            it(this, requestCode, resultCode, data) { success ->
+                if (success) {
+                    showMain()
+                }
+            }
+        }
     }
 
     private fun showMain() {
         findViewById<ConstraintLayout>(R.id.sub_start).isVisible = false
         findViewById<ConstraintLayout>(R.id.sub_main).isVisible = true
         findViewById<TextView>(R.id.main_account_desc).text =
-            format(getString(R.string.main_account_desc), ssoAccount.name)
+            format(getString(R.string.main_account_desc), getAccount(this)?.name)
         showLogout = true
         invalidateOptionsMenu()
         RestartWorker.startPeriodic(this)
