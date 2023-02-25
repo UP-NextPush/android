@@ -30,6 +30,7 @@ import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
+import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.utils.TAG
@@ -158,7 +159,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun restart() {
         Log.d(TAG, "Restarting the Listener")
-        StartService.service?.stopService {
+        FailureHandler.clearFails()
+        StartService.stopService {
             RestartWorker.start(this, delay = 0)
         }
     }

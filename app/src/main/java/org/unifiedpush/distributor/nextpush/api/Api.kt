@@ -41,6 +41,7 @@ object Api {
     }
 
     fun apiDestroy() {
+        Log.d(TAG, "Destroying API")
         provider?.destroyProvider()
         provider = null
         source?.cancel()

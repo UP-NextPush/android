@@ -10,7 +10,7 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 
 class RestartNetworkCallback(val context: Context) : ConnectivityManager.NetworkCallback() {
-    var connectivityManager: ConnectivityManager? = null
+    private var connectivityManager: ConnectivityManager? = null
 
     override fun onAvailable(network: Network) {
         Log.d(TAG, "Network is CONNECTED")
@@ -32,8 +32,10 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
     }
 
     fun register() {
-        Log.d(TAG, "Registering Network Callback")
-        connectivityManager ?: run {
+        connectivityManager?.let {
+            Log.d(TAG, "ConnectivityManager already registered")
+        } ?: run {
+            Log.d(TAG, "Registering new ConnectivityManager")
             try {
                 connectivityManager = (
                     context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -47,6 +49,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
     }
 
     fun unregister() {
+        Log.d(TAG, "Unregistering ConnectivityManager")
         connectivityManager?.unregisterNetworkCallback(this)
         connectivityManager = null
     }

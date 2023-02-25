@@ -10,7 +10,6 @@ import android.util.Log
 import com.nextcloud.android.sso.exceptions.NextcloudFilesAppAccountNotFoundException
 import com.nextcloud.android.sso.exceptions.NoCurrentAccountSelectedException
 import com.nextcloud.android.sso.helper.SingleAccountHelper
-import okhttp3.sse.EventSource
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.nextcloudAppNotInstalledDialog
 import org.unifiedpush.distributor.nextpush.account.AccountUtils.ssoAccount
 import org.unifiedpush.distributor.nextpush.api.Api.apiDestroy
@@ -21,24 +20,33 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class StartService : Service() {
 
-    companion object {
+    companion object StartServiceCompanion {
         private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
 
-        var service: StartService? = null
+        private var service: StartService? = null
         var isServiceStarted = false
+            private set
         var wakeLock: PowerManager.WakeLock? = null
+            private set
 
         fun startListener(context: Context) {
             if (isServiceStarted && !FailureHandler.hasFailed()) return
             Log.d(TAG, "Starting the Listener")
             Log.d(TAG, "Service is started: $isServiceStarted")
-            Log.d(TAG, "nFails: $FailureHandler.nFails")
+            Log.d(TAG, "nFails: ${FailureHandler.nFails}")
             val serviceIntent = Intent(context, StartService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
             } else {
                 context.startService(serviceIntent)
             }
+        }
+
+        fun stopService(block: () -> Unit = {}) {
+            Log.d(TAG, "Stopping Service")
+            isServiceStarted = false
+            service?.stopSelf()
+            block()
         }
     }
 
@@ -65,32 +73,22 @@ class StartService : Service() {
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "Destroyed")
-        if (isServiceStarted) {
-            apiDestroy()
-            Log.d(TAG, "onDestroy: restarting worker")
-            RestartWorker.start(this, delay = 0)
-        } else {
-            stopService()
-        }
-    }
-
-    fun stopService(block: () -> Unit = {}) {
-        Log.d(TAG, "Stopping Service")
-        isServiceStarted = false
-        FailureHandler.clearFails()
+        Log.d(TAG, "Destroying Service")
         apiDestroy()
-        networkCallback.unregister()
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()
             }
         }
-        stopSelf()
-        block()
+        if (isServiceStarted) {
+            Log.d(TAG, "onDestroy: restarting worker")
+            RestartWorker.start(this, delay = 0)
+        }
     }
 
     private fun startService() {
+        // If the service is running and we don't have any fail
+        // In case somehow startService is called when everything is fine
         if (isServiceStarted && !FailureHandler.hasFailed()) return
         isServiceStarted = true
 
