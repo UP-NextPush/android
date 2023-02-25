@@ -36,16 +36,16 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     companion object {
         fun start(context: Context, delay: Long? = null) {
             val work = PeriodicWorkRequestBuilder<RestartWorker>(16, TimeUnit.MINUTES)
-            if (delay != null) {
+            delay?.let {
                 lastEventDate = null
-                work.setInitialDelay(delay, TimeUnit.SECONDS)
+                work.setInitialDelay(it, TimeUnit.SECONDS)
             }
-            val workManager = WorkManager.getInstance(context)
-            workManager.enqueueUniquePeriodicWork(
-                UNIQUE_WORK_TAG,
-                ExistingPeriodicWorkPolicy.REPLACE,
-                work.build()
-            )
+            WorkManager.getInstance(context)
+                .enqueueUniquePeriodicWork(
+                    UNIQUE_WORK_TAG,
+                    ExistingPeriodicWorkPolicy.REPLACE,
+                    work.build()
+                )
         }
     }
 }
