@@ -9,7 +9,8 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-private const val UNIQUE_WORK_TAG = "nextpush::RestartWorker::unique"
+private const val UNIQUE_PERIODIC_WORK_TAG = "nextpush::RestartWorker::unique_periodic"
+private const val UNIQUE_ONETIME_WORK_TAG = "nextpush::RestartWorker::unique_onetime"
 
 class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
@@ -34,18 +35,26 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     }
 
     companion object {
-        fun start(context: Context, delay: Long? = null) {
+
+        fun startPeriodic(context: Context) {
             val work = PeriodicWorkRequestBuilder<RestartWorker>(16, TimeUnit.MINUTES)
-            delay?.let {
-                lastEventDate = null
-                work.setInitialDelay(it, TimeUnit.SECONDS)
-            }
             WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(
-                    UNIQUE_WORK_TAG,
+                    UNIQUE_PERIODIC_WORK_TAG,
                     ExistingPeriodicWorkPolicy.REPLACE,
                     work.build()
                 )
+        }
+        fun run(context: Context, delay: Long) {
+            val work = OneTimeWorkRequestBuilder<RestartWorker>().apply {
+                setInitialDelay(delay, TimeUnit.SECONDS)
+            }
+            lastEventDate = null
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                UNIQUE_ONETIME_WORK_TAG,
+                ExistingWorkPolicy.REPLACE,
+                work.build()
+            )
         }
     }
 }

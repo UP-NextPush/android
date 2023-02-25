@@ -70,7 +70,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         }
         Log.d(TAG, "onClosed: $eventSource")
         FailureHandler.newFail(context, eventSource)
-        RestartWorker.start(context, delay = 0)
+        RestartWorker.run(context, delay = 0)
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
@@ -87,14 +87,15 @@ class SSEListener(val context: Context) : EventSourceListener() {
         FailureHandler.newFail(context, eventSource)
         val delay = when (FailureHandler.nFails) {
             1 -> 2 // 2sec
-            2 -> 20 // 20sec
-            3 -> 60 // 1min
-            4 -> 300 // 5min
-            5 -> 600 // 10min
+            2 -> 5 // 5sec
+            3 -> 20 // 20sec
+            4 -> 60 // 1min
+            5 -> 300 // 5min
+            6 -> 600 // 10min
             else -> return // else keep the worker with its 16min
         }.toLong()
         Log.d(TAG, "Retrying in $delay s")
-        RestartWorker.start(context, delay = delay)
+        RestartWorker.run(context, delay = delay)
     }
 
     companion object {

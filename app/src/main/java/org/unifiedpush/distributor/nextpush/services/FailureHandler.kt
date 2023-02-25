@@ -32,6 +32,7 @@ object FailureHandler {
             if (hasFailed(twice = true)) {
                 createWarningNotification(context)
             }
+            this.eventSource = null
         }
     }
 

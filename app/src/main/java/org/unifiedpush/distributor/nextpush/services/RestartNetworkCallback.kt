@@ -16,7 +16,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         Log.d(TAG, "Network is CONNECTED")
         if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
             Log.d(TAG, "networkCallback: restarting worker")
-            RestartWorker.start(context, delay = 0)
+            RestartWorker.run(context, delay = 0)
         }
     }
 
@@ -27,7 +27,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         Log.d(TAG, "Network Capabilities changed")
         if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
             Log.d(TAG, "networkCallback: restarting worker")
-            RestartWorker.start(context, delay = 0)
+            RestartWorker.run(context, delay = 0)
         } // else, it retries in max 2sec
     }
 

@@ -9,7 +9,7 @@ class StartReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            RestartWorker.start(context)
+            RestartWorker.startPeriodic(context)
         }
     }
 }

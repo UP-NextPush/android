@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
             format(getString(R.string.main_account_desc), ssoAccount.name)
         showLogout = true
         invalidateOptionsMenu()
-        RestartWorker.start(this)
+        RestartWorker.startPeriodic(this)
     }
 
     private fun showStart() {
@@ -161,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Restarting the Listener")
         FailureHandler.clearFails()
         StartService.stopService {
-            RestartWorker.start(this, delay = 0)
+            RestartWorker.run(this, delay = 0)
         }
     }
 
