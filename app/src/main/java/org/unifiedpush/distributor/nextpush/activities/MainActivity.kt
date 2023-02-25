@@ -179,6 +179,8 @@ class MainActivity : AppCompatActivity() {
                 .remove("PREF_CURRENT_ACCOUNT_STRING")
                 .apply()
             deleteDevice(this)
+            StartService.stopService()
+            FailureHandler.clearFails()
             showStart()
             finish()
             startActivity(intent)
