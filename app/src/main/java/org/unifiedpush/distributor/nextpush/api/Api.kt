@@ -10,12 +10,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
+import org.unifiedpush.distributor.nextpush.account.Account.deviceId
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.getDeviceId
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.removeDeviceId
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.removeUrl
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.saveDeviceId
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.saveUrl
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProviderFactory
@@ -52,12 +48,11 @@ object Api {
     }
 
     fun Context.apiSync() {
-        getDeviceId(this)?.let {
+        deviceId?.let {
             syncDevice(it)
         }
             ?: run {
                 Log.d(TAG, "No deviceId found.")
-                var deviceId: String? = null
 
                 val parameters = mapOf("deviceName" to Build.MODEL)
 
@@ -72,7 +67,6 @@ object Api {
 
                             override fun onNext(response: ApiResponse) {
                                 response.deviceId.let {
-                                    saveDeviceId(this@apiSync, it)
                                     deviceId = it
                                 }
                             }
@@ -82,8 +76,6 @@ object Api {
                             }
 
                             override fun onComplete() {
-                                saveUrl(this@apiSync, "$baseUrl$mApiEndpoint")
-
                                 // Sync once it is registered
                                 deviceId?.let {
                                     syncDevice(it)
@@ -111,7 +103,7 @@ object Api {
     }
 
     fun Context.apiDeleteDevice(block: () -> Unit = {}) {
-        val deviceId = getDeviceId(this) ?: return
+        val deviceId = deviceId ?: return
 
         withApiProvider { apiProvider ->
             apiProvider.deleteDevice(deviceId)
@@ -135,11 +127,10 @@ object Api {
                     }
 
                     override fun onComplete() {
-                        removeUrl(this@apiDeleteDevice)
                         block()
                     }
                 })
-            removeDeviceId(this)
+            this.deviceId = null
         }
     }
 
@@ -148,7 +139,7 @@ object Api {
         block: (String?) -> Unit
     ) {
         // The unity of connector token must already be checked here
-        val parameters = getDeviceId(this)?.let {
+        val parameters = deviceId?.let {
             mutableMapOf(
                 "deviceId" to it,
                 "appName" to appName

@@ -3,10 +3,11 @@ package org.unifiedpush.distributor.nextpush.distributor
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import org.unifiedpush.distributor.nextpush.account.AccountUtils.getUrl
+import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.Api.apiCreateApp
 import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteApp
 import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteDevice
+import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 /**
@@ -94,7 +95,7 @@ object Distributor {
     private fun getEndpoint(context: Context, connectorToken: String): String {
         val db = getDb(context)
         val appToken = db.getAppToken(connectorToken)
-        return "${getUrl(context)}/push/$appToken"
+        return "${getAccount(context)?.url}$mApiEndpoint/push/$appToken"
     }
 
     fun checkToken(context: Context, connectorToken: String, app: String): String {
