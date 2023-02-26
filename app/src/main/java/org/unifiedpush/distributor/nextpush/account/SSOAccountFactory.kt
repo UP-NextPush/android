@@ -123,7 +123,7 @@ class SSOAccountFactory : AccountFactory {
             ": " + context.getString(R.string.uri_fdroid_nextcloud_app)
         }
         val s = SpannableString(messageContent)
-        Linkify.addLinks(s, Linkify.ALL)
+        Linkify.addLinks(s, Linkify.WEB_URLS)
         message.text = s
         message.movementMethod = LinkMovementMethod.getInstance()
         message.setPadding(32, 32, 32, 32)
