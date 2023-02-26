@@ -1,26 +1,21 @@
 package org.unifiedpush.distributor.nextpush.activities
 
-import android.Manifest
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.isVisible
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.AccountImporter.clearAllAuthTokens
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
+import org.unifiedpush.distributor.nextpush.activities.PermissionsRequest.requestAppPermissions
+import org.unifiedpush.distributor.nextpush.activities.StartActivity.Companion.goToStartActivity
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteDevice
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
@@ -34,82 +29,22 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var listView: ListView
     private var showLogout = false
-    private var onResult: ((activity: Activity, requestCode: Int, resultCode: Int, data: Intent?, block: (success: Boolean) -> Unit) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
-        requestPermissions()
-        if (isConnected(this)) {
-            showMain()
-        } else {
-            findViewById<Button>(R.id.button_connection).setOnClickListener {
-                getAccount(this, uninitialized = true)?.let {
-                    onResult = { activity: Activity, i: Int, i1: Int, intent: Intent?, block: (success: Boolean) -> Unit ->
-                        it.onActivityResult(activity, i, i1, intent, block)
-                    }
-                    it.connect(this)
-                }
-            }
-            showStart()
+        this.requestAppPermissions()
+        if (!isConnected(this)) {
+            goToStartActivity(this)
+            finish()
         }
-    }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        onResult?.let {
-            it(this, requestCode, resultCode, data) { success ->
-                if (success) {
-                    showMain()
-                }
-            }
-        }
-    }
-
-    private fun showMain() {
-        findViewById<ConstraintLayout>(R.id.sub_start).isVisible = false
-        findViewById<ConstraintLayout>(R.id.sub_main).isVisible = true
         findViewById<TextView>(R.id.main_account_desc).text =
             format(getString(R.string.main_account_desc), getAccount(this)?.name)
         showLogout = true
         invalidateOptionsMenu()
         RestartWorker.startPeriodic(this)
-    }
-
-    private fun showStart() {
-        findViewById<ConstraintLayout>(R.id.sub_start).isVisible = true
-        findViewById<ConstraintLayout>(R.id.sub_main).isVisible = false
-        showLogout = false
-        invalidateOptionsMenu()
-    }
-
-    private fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                Log.d(TAG, "Requesting POST_NOTIFICATIONS permission")
-                registerForActivityResult(
-                    ActivityResultContracts.RequestPermission()
-                ) { granted ->
-                    Log.d(TAG, "POST_NOTIFICATIONS permission granted: $granted")
-                    if (granted) {
-                        restart()
-                    } else {
-                        if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                            Log.d(TAG, "Show POST_NOTIFICATIONS permission rationale")
-                            AlertDialog.Builder(this)
-                                .setTitle(getString(R.string.no_notification_dialog_title))
-                                .setMessage(R.string.no_notification_dialog_message)
-                                .show()
-                        }
-                    }
-                }.launch(
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
-            }
-        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -121,8 +56,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
-        menu.findItem(R.id.action_restart).isEnabled = showLogout
-        menu.findItem(R.id.action_logout).isEnabled = showLogout
         return true
     }
 
@@ -166,9 +99,8 @@ class MainActivity : AppCompatActivity() {
                 StartService.stopService()
                 FailureHandler.clearFails()
             }
-            showStart()
             finish()
-            startActivity(intent)
+            goToStartActivity(this)
         }
         alert.setNegativeButton(getString(R.string.discard)) { dialog, _ -> dialog.dismiss() }
         alert.show()
@@ -215,5 +147,14 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         )
+    }
+    companion object {
+        fun goToMainActivity(context: Context) {
+            val intent = Intent(
+                context,
+                MainActivity::class.java
+            )
+            context.startActivity(intent)
+        }
     }
 }

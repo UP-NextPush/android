@@ -6,8 +6,7 @@
 
     <string name="help"></string>
     <string name="foreground_notif_description">Notification to run in the foreground</string>
-    <string name="connection_button">Login</string>
-    <string name="connection_description">You are not connected to Nextcloud yet</string>
+    <string name="sso_connection_button">Login with the Nextcloud File application</string>
     <string name="action_logout">Logout</string>
     <string name="logout_alert_title">Logout</string>
     <string name="logout_alert_content">Confirm to logout</string>
@@ -28,4 +27,5 @@
     <string name="nextcloud_files_not_found_title">Nextcloud Files not found</string>
     <string name="no_notification_dialog_title">Notifications refused</string>
     <string name="no_notification_dialog_message">You won\'t be notified when the application is disconnected.\nYou can enable notifications later in the settings.</string>
+    <string name="manual_login">Manual login</string>
 </resources>

@@ -62,7 +62,7 @@ object NotificationUtils {
         return builder
             .setContentTitle(context.getString(R.string.app_name))
             .setContentText(context.getString(R.string.foreground_notif_description))
-            .setSmallIcon(R.drawable.ic_launcher_notification)
+            .setSmallIcon(R.drawable.ic_logo)
             .setTicker(context.getString(R.string.foreground_notif_ticker))
             .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
             .setContentIntent(intent)
@@ -112,7 +112,7 @@ object NotificationUtils {
             }
             ).setContentTitle(context.getString(R.string.app_name))
             .setContentText(context.getString(R.string.warning_notif_description))
-            .setSmallIcon(R.drawable.ic_launcher_notification)
+            .setSmallIcon(R.drawable.ic_logo)
             .setTicker(context.getString(R.string.warning_notif_ticker))
             .setPriority(Notification.PRIORITY_HIGH) // for under android 26 compatibility
             .setContentIntent(intent)

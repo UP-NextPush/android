@@ -24,8 +24,4 @@
         android:id="@+id/sub_main"
         layout="@layout/content_main" />
 
-    <include
-        android:id="@+id/sub_start"
-        layout="@layout/content_start" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
