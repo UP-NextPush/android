@@ -6,8 +6,8 @@ import android.content.Intent
 
 interface AccountFactory {
     val apiFactory: Class<*>
-    val name: String
-    val url: String
+    val name: String?
+    val url: String?
     fun initAccount(context: Context)
     fun isConnected(context: Context): Boolean
     fun connect(activity: Activity)

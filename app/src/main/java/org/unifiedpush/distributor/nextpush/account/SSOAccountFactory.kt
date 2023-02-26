@@ -22,10 +22,10 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class SSOAccountFactory : AccountFactory {
     override val apiFactory: Class<*> = ApiSSOFactory::class.java
-    override val name: String
-        get() = ssoAccount!!.name
-    override val url: String
-        get() = ssoAccount!!.url
+    override val name: String?
+        get() = ssoAccount?.name
+    override val url: String?
+        get() = ssoAccount?.url
 
     private var ssoAccount: SingleSignOnAccount? = null
 

@@ -29,6 +29,9 @@ object Api {
     private var provider: ApiProviderFactory? = null
     private var source: EventSource? = null
 
+    private val Context.baseUrl: String
+        get() = getAccount(this)?.url ?: "http://0.0.0.0/"
+
     private fun Context.withApiProvider(block: (ApiProvider) -> Unit) {
         (
             provider ?: run {
@@ -79,7 +82,7 @@ object Api {
                             }
 
                             override fun onComplete() {
-                                saveUrl(this@apiSync, "${getAccount(this@apiSync)?.url}$mApiEndpoint")
+                                saveUrl(this@apiSync, "$baseUrl$mApiEndpoint")
 
                                 // Sync once it is registered
                                 deviceId?.let {
@@ -97,7 +100,7 @@ object Api {
             .readTimeout(0, TimeUnit.SECONDS)
             .retryOnConnectionFailure(false)
             .build()
-        val url = "${getAccount(this)?.url}$mApiEndpoint/device/$deviceId"
+        val url = "$baseUrl$mApiEndpoint/device/$deviceId"
 
         val request = Request.Builder().url(url)
             .get()
