@@ -1,0 +1,4 @@
+- Add possibility to use without Nextcloud app
+- New login UI
+- Fix restart worker
+- Some optimizations and bugfixes
