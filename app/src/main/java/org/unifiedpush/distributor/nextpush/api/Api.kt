@@ -10,8 +10,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
+import org.unifiedpush.distributor.nextpush.account.Account.accountType
 import org.unifiedpush.distributor.nextpush.account.Account.deviceId
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
+import org.unifiedpush.distributor.nextpush.account.AccountType
+import org.unifiedpush.distributor.nextpush.api.provider.ApiDirectFactory
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProviderFactory
@@ -32,7 +35,10 @@ object Api {
         (
             provider ?: run {
                 Log.d(TAG, "Setting SSOProvider")
-                ApiSSOFactory(this).apply {
+                when (accountType) {
+                    AccountType.SSO -> ApiSSOFactory(this)
+                    AccountType.Direct -> ApiDirectFactory(this)
+                }.apply {
                     provider = this
                 }
             }
@@ -92,7 +98,7 @@ object Api {
             .readTimeout(0, TimeUnit.SECONDS)
             .retryOnConnectionFailure(false)
             .build()
-        val url = "$baseUrl$mApiEndpoint/device/$deviceId"
+        val url = "$baseUrl${mApiEndpoint}device/$deviceId"
 
         val request = Request.Builder().url(url)
             .get()

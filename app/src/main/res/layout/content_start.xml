@@ -7,11 +7,14 @@
     android:background="@color/nextcloud"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+    <!-- Part comes from https://github.com/nextcloud/news-android/blob/v.0.9.9.78/News-Android-App/src/main/res/layout/activity_login_dialog.xml -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="vertical"
+        android:padding="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -40,19 +43,15 @@
             app:layout_constraintTop_toBottomOf="@+id/img_nextcloud_logo" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/sso_connection"
+            android:id="@+id/btn_sso_login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:layout_marginEnd="32dp"
-            android:backgroundTint="@color/white"
-            android:padding="16dp"
+            android:layout_marginEnd="16dp"
             android:text="@string/sso_connection_button"
-            android:textAllCaps="false"
-            android:textColor="@color/nextcloud"
-            android:textStyle="bold"
             app:cornerRadius="24dp"
+            style="@style/NextcloudButton"
             app:layout_constraintTop_toBottomOf="@+id/textView3" />
 
 
@@ -66,7 +65,113 @@
             android:gravity="center"
             android:text="@string/manual_login"
             android:textColor="@color/material_grey_100"
-            app:layout_constraintTop_toBottomOf="@+id/sso_connection" />
+            app:layout_constraintTop_toBottomOf="@+id/btn_sso_login" />
+
+
+        <RelativeLayout
+            android:id="@+id/manual_login_wrapper"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/username_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:counterOverflowTextColor="@android:color/white"
+                android:theme="@style/TextInputLayoutAppearance"
+                style="@style/TextInputLayoutStyle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edt_username"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:hint="@string/login_hint_username"
+                    android:inputType="textEmailAddress"
+                    android:textAlignment="viewStart"
+                    style="@style/TextInputEditTextLogin"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/password_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/username_container"
+                android:layout_alignParentStart="true"
+                app:counterOverflowTextColor="@android:color/white"
+                android:theme="@style/TextInputLayoutAppearance"
+                style="@style/TextInputLayoutStyle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edt_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:hint="@string/login_hint_password"
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textAlignment="viewStart"
+                    style="@style/TextInputEditTextLogin"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/url_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/password_container"
+                android:layout_alignParentStart="true"
+                app:counterOverflowTextColor="@android:color/white"
+                android:theme="@style/TextInputLayoutAppearance"
+                style="@style/TextInputLayoutStyle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edt_url"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:hint="@string/login_hint_nextcloud_root_url"
+                    android:inputType="textUri"
+                    android:maxLines="1"
+                    android:selectAllOnFocus="true"
+                    android:singleLine="true"
+                    android:textAlignment="viewStart"
+                    style="@style/TextInputEditTextLogin"
+                    android:theme="@style/TextInputEditTextLogin" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageView
+                android:id="@+id/ic_show_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/password_container"
+                android:layout_alignEnd="@+id/password_container"
+                android:layout_alignBottom="@+id/password_container"
+                android:layout_gravity="end"
+                android:contentDescription="@string/login_show_password_img_description"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:src="@drawable/ic_action_visibility"
+                app:tint="@color/white" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_manual_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/url_container"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/login_button_sign_in"
+                style="@style/NextcloudButton"
+                app:cornerRadius="24dp"/>
+
+        </RelativeLayout>
+
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

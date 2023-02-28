@@ -28,4 +28,9 @@
     <string name="no_notification_dialog_title">Notifications refused</string>
     <string name="no_notification_dialog_message">You won\'t be notified when the application is disconnected.\nYou can enable notifications later in the settings.</string>
     <string name="manual_login">Manual login</string>
+    <string name="login_hint_username">Username</string>
+    <string name="login_hint_password">Application password</string>
+    <string name="login_hint_nextcloud_root_url">Nextcloud root url</string>
+    <string name="login_button_sign_in">Sign in</string>
+    <string name="login_show_password_img_description">Show password</string>
 </resources>

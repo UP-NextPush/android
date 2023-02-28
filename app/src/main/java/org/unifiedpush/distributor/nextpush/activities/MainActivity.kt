@@ -9,8 +9,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
 import androidx.appcompat.app.AppCompatActivity
-import com.nextcloud.android.sso.AccountImporter
-import com.nextcloud.android.sso.AccountImporter.clearAllAuthTokens
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
@@ -90,11 +88,7 @@ class MainActivity : AppCompatActivity() {
         alert.setMessage(R.string.logout_alert_content)
         alert.setPositiveButton(R.string.ok) { dialog, _ ->
             dialog.dismiss()
-            clearAllAuthTokens(this)
-            AccountImporter.getSharedPreferences(this)
-                .edit()
-                .remove("PREF_CURRENT_ACCOUNT_STRING")
-                .apply()
+            getAccount(this)?.logout(this)
             deleteDevice(this) {
                 StartService.stopService()
                 FailureHandler.clearFails()

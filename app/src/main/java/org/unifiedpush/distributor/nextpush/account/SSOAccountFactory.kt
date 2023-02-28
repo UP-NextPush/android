@@ -17,23 +17,17 @@ import com.nextcloud.android.sso.helper.SingleAccountHelper
 import com.nextcloud.android.sso.model.SingleSignOnAccount
 import com.nextcloud.android.sso.ui.UiExceptionManager
 import org.unifiedpush.distributor.nextpush.R
-import org.unifiedpush.distributor.nextpush.api.provider.ApiSSOFactory
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class SSOAccountFactory : AccountFactory {
-    override val apiFactory: Class<*> = ApiSSOFactory::class.java
-    override val name: String?
+    override var name: String? = null
         get() = ssoAccount?.name
-    override val url: String?
+    override var url: String? = null
         get() = ssoAccount?.url
 
     private var ssoAccount: SingleSignOnAccount? = null
 
-    override fun initAccount(context: Context) {
-        ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
-    }
-
-    override fun isConnected(context: Context): Boolean {
+    override fun initAccount(context: Context): Boolean {
         try {
             ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
         } catch (e: NextcloudFilesAppAccountNotFoundException) {
@@ -91,6 +85,14 @@ class SSOAccountFactory : AccountFactory {
 
     override fun getAccount(context: Context): Any? {
         return ssoAccount
+    }
+
+    override fun logout(context: Context) {
+        AccountImporter.clearAllAuthTokens(context)
+        AccountImporter.getSharedPreferences(context)
+            .edit()
+            .remove("PREF_CURRENT_ACCOUNT_STRING")
+            .apply()
     }
 
     private fun nextcloudAppNotInstalledDialog(context: Context) {

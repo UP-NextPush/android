@@ -5,12 +5,11 @@ import android.content.Context
 import android.content.Intent
 
 interface AccountFactory {
-    val apiFactory: Class<*>
-    val name: String?
-    val url: String?
-    fun initAccount(context: Context)
-    fun isConnected(context: Context): Boolean
+    var name: String?
+    var url: String?
+    fun initAccount(context: Context): Boolean
     fun connect(activity: Activity)
     fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?, block: (success: Boolean) -> Unit)
     fun getAccount(context: Context): Any?
+    fun logout(context: Context)
 }
