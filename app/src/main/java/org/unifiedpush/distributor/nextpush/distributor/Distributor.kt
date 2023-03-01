@@ -95,7 +95,7 @@ object Distributor {
     private fun getEndpoint(context: Context, connectorToken: String): String {
         val db = getDb(context)
         val appToken = db.getAppToken(connectorToken)
-        return "${getAccount(context)?.url}${mApiEndpoint}/push/$appToken"
+        return "${getAccount(context)?.url}$mApiEndpoint/push/$appToken"
     }
 
     fun checkToken(context: Context, connectorToken: String, app: String): String {
