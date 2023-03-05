@@ -65,6 +65,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
     }
 
     override fun onClosed(eventSource: EventSource) {
+        eventSource.cancel()
         if (!StartService.isServiceStarted) {
             return
         }
@@ -74,6 +75,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+        eventSource.cancel()
         if (!StartService.isServiceStarted) {
             return
         }
