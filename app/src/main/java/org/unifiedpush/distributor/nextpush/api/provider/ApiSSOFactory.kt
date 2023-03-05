@@ -6,52 +6,40 @@ import com.google.gson.GsonBuilder
 import com.nextcloud.android.sso.api.NextcloudAPI
 import com.nextcloud.android.sso.model.SingleSignOnAccount
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
-import org.unifiedpush.distributor.nextpush.utils.TAG
 import retrofit2.NextcloudRetrofitApiBuilder
 
 class ApiSSOFactory(val context: Context) : ApiProviderFactory {
 
     private val TAG = ApiSSOFactory::class.java.simpleName
-    private var apiProvider: ApiProvider? = null
-    private var nextcloudAPI: NextcloudAPI? = null
 
     override fun getProviderAndExecute(block: (ApiProvider) -> Unit) {
+        var nextcloudAPI: NextcloudAPI? = null
         val account = getAccount(context) ?: run {
             throw NoProviderException("No account found")
         }
         val client = account.getAccount(context) as SingleSignOnAccount? ?: run {
             throw NoProviderException("No client found")
         }
-        apiProvider?.let(block)
-            ?: run {
-                Log.d(TAG, "Creating new provider")
-                val ssoApiCallback = object : NextcloudAPI.ApiConnectedListener {
-                    override fun onConnected() {
-                        Log.d(TAG, "Api connected.")
-                        nextcloudAPI?.let { nextcloudAPI ->
-                            NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
-                                .create(ApiProvider::class.java).let {
-                                    apiProvider = it
-                                    block(it)
-                                }
+        val ssoApiCallback = object : NextcloudAPI.ApiConnectedListener {
+            override fun onConnected() {
+                Log.d(TAG, "Api connected.")
+                nextcloudAPI?.let { nextcloudAPI ->
+                    NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
+                        .create(ApiProvider::class.java).let {
+                            block(it)
                         }
-                    }
-
-                    override fun onError(ex: Exception) {
-                        Log.d(TAG, "Cannot connect to API: ex = [$ex]")
-                    }
                 }
-                nextcloudAPI = NextcloudAPI(
-                    context,
-                    client,
-                    GsonBuilder().create(),
-                    ssoApiCallback
-                )
             }
-    }
 
-    override fun destroyProvider() {
-        nextcloudAPI?.stop()
-        nextcloudAPI = null
+            override fun onError(ex: Exception) {
+                Log.d(TAG, "Cannot connect to API: ex = [$ex]")
+            }
+        }
+        nextcloudAPI = NextcloudAPI(
+            context,
+            client,
+            GsonBuilder().create(),
+            ssoApiCallback
+        )
     }
 }

@@ -19,39 +19,28 @@ import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.m
 import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
 import java.util.concurrent.TimeUnit
 
-object Api {
+class Api(val context: Context) {
 
     private val TAG = Api::class.java.simpleName
-    private var provider: ApiProviderFactory? = null
-    private var source: EventSource? = null
 
-    private val Context.baseUrl: String
-        get() = getAccount(this)?.url ?: "http://0.0.0.0/"
+    private val baseUrl: String
+        get() = getAccount(context)?.url ?: "http://0.0.0.0/"
 
-    private fun Context.withApiProvider(block: (ApiProvider) -> Unit) {
-        (
-            provider ?: run {
-                Log.d(TAG, "Setting SSOProvider")
-                when (accountType) {
-                    AccountType.SSO -> ApiSSOFactory(this)
-                    AccountType.Direct -> ApiDirectFactory(this)
-                }.apply {
-                    provider = this
-                }
-            }
-            ).getProviderAndExecute(block)
+    private fun withApiProvider(block: (ApiProvider) -> Unit) {
+        when (context.accountType) {
+            AccountType.SSO -> ApiSSOFactory(context)
+            AccountType.Direct -> ApiDirectFactory(context)
+        }.getProviderAndExecute(block)
     }
 
     fun apiDestroy() {
         Log.d(TAG, "Destroying API")
-        provider?.destroyProvider()
-        provider = null
-        source?.cancel()
-        source = null
+        syncSource?.cancel()
+        syncSource = null
     }
 
-    fun Context.apiSync() {
-        deviceId?.let {
+    fun apiSync() {
+        context.deviceId?.let {
             syncDevice(it)
         }
             ?: run {
@@ -70,7 +59,7 @@ object Api {
 
                                 override fun onNext(response: ApiResponse) {
                                     response.deviceId.let {
-                                        deviceId = it
+                                        context.deviceId = it
                                     }
                                 }
 
@@ -80,7 +69,7 @@ object Api {
 
                                 override fun onComplete() {
                                     // Sync once it is registered
-                                    deviceId?.let {
+                                    context.deviceId?.let {
                                         syncDevice(it)
                                     }
                                     Log.d(TAG, "mApi register: onComplete")
@@ -93,7 +82,7 @@ object Api {
             }
     }
 
-    private fun Context.syncDevice(deviceId: String) {
+    private fun syncDevice(deviceId: String) {
         val client = OkHttpClient.Builder()
             .readTimeout(0, TimeUnit.SECONDS)
             .retryOnConnectionFailure(false)
@@ -104,12 +93,12 @@ object Api {
             .get()
             .build()
 
-        source = EventSources.createFactory(client).newEventSource(request, SSEListener(this))
+        syncSource = EventSources.createFactory(client).newEventSource(request, SSEListener(context))
         Log.d(TAG, "cSync done.")
     }
 
-    fun Context.apiDeleteDevice(block: () -> Unit = {}) {
-        val deviceId = deviceId ?: return
+    fun apiDeleteDevice(block: () -> Unit = {}) {
+        val deviceId = context.deviceId ?: return
         try {
             withApiProvider { apiProvider ->
                 apiProvider.deleteDevice(deviceId)
@@ -136,19 +125,19 @@ object Api {
                             block()
                         }
                     })
-                this.deviceId = null
+                context.deviceId = null
             }
         } catch (e: NoProviderException) {
             e.printStackTrace()
         }
     }
 
-    fun Context.apiCreateApp(
+    fun apiCreateApp(
         appName: String,
         block: (String?) -> Unit
     ) {
         // The unity of connector token must already be checked here
-        val parameters = deviceId?.let {
+        val parameters = context.deviceId?.let {
             mutableMapOf(
                 "deviceId" to it,
                 "appName" to appName
@@ -188,7 +177,7 @@ object Api {
         }
     }
 
-    fun Context.apiDeleteApp(nextpushToken: String, block: () -> Unit) {
+    fun apiDeleteApp(nextpushToken: String, block: () -> Unit) {
         try {
             withApiProvider { apiProvider ->
                 apiProvider.deleteApp(nextpushToken)
@@ -219,5 +208,9 @@ object Api {
         } catch (e: NoProviderException) {
             e.printStackTrace()
         }
+    }
+
+    companion object {
+        private var syncSource: EventSource? = null
     }
 }

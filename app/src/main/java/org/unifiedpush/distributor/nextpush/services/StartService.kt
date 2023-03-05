@@ -8,8 +8,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
-import org.unifiedpush.distributor.nextpush.api.Api.apiDestroy
-import org.unifiedpush.distributor.nextpush.api.Api.apiSync
+import org.unifiedpush.distributor.nextpush.api.Api
 import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createForegroundNotification
@@ -18,6 +17,7 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 class StartService : Service() {
 
     private val networkCallback = RestartNetworkCallback(this)
+    private var api: Api? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -41,7 +41,7 @@ class StartService : Service() {
 
     override fun onDestroy() {
         Log.d(TAG, "Destroying Service")
-        apiDestroy()
+        api?.apiDestroy()
         wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -69,8 +69,9 @@ class StartService : Service() {
                 acquire(10000L /*10 secs*/)
             }
         }
-
-        apiSync()
+        api = Api(this).also {
+            it.apiSync()
+        }
     }
 
     companion object StartServiceCompanion {

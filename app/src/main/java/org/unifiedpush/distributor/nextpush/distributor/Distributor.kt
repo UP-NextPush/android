@@ -4,9 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
-import org.unifiedpush.distributor.nextpush.api.Api.apiCreateApp
-import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteApp
-import org.unifiedpush.distributor.nextpush.api.Api.apiDeleteDevice
+import org.unifiedpush.distributor.nextpush.api.Api
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
@@ -115,11 +113,11 @@ object Distributor {
             sendUnregistered(context, it)
             db.unregisterApp(it)
         }
-        context.apiDeleteDevice(block)
+        Api(context).apiDeleteDevice(block)
     }
 
     fun createApp(context: Context, appName: String, connectorToken: String, block: () -> Unit) {
-        context.apiCreateApp(appName) { nextpushToken ->
+        Api(context).apiCreateApp(appName) { nextpushToken ->
             nextpushToken?.let {
                 getDb(context).registerApp(appName, connectorToken, it)
             }
@@ -133,7 +131,7 @@ object Distributor {
         db.getAppToken(
             connectorToken
         )?.let { nextpushToken ->
-            context.apiDeleteApp(nextpushToken) {
+            Api(context).apiDeleteApp(nextpushToken) {
                 db.unregisterApp(connectorToken)
                 block()
             }
