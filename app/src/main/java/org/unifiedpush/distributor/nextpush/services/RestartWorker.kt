@@ -3,6 +3,7 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import androidx.work.* // ktlint-disable no-wildcard-imports
+import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.keepalive
 import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.TAG
@@ -37,6 +38,7 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     companion object {
 
         fun startPeriodic(context: Context) {
+            getAccount(context) ?: return
             val work = PeriodicWorkRequestBuilder<RestartWorker>(16, TimeUnit.MINUTES)
             WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(
