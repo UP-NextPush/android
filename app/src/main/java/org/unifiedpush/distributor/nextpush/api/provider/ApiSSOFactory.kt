@@ -6,18 +6,21 @@ import com.google.gson.GsonBuilder
 import com.nextcloud.android.sso.api.NextcloudAPI
 import com.nextcloud.android.sso.model.SingleSignOnAccount
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
+import org.unifiedpush.distributor.nextpush.utils.TAG
 import retrofit2.NextcloudRetrofitApiBuilder
 
 class ApiSSOFactory(val context: Context) : ApiProviderFactory {
 
     private val TAG = ApiSSOFactory::class.java.simpleName
     private var apiProvider: ApiProvider? = null
-    private lateinit var nextcloudAPI: NextcloudAPI
+    private var nextcloudAPI: NextcloudAPI? = null
 
     override fun getProviderAndExecute(block: (ApiProvider) -> Unit) {
         val account = getAccount(context) ?: run {
-            Log.w(TAG, "No account found")
-            return
+            throw NoProviderException("No account found")
+        }
+        val client = account.getAccount(context) as SingleSignOnAccount? ?: run {
+            throw NoProviderException("No client found")
         }
         apiProvider?.let(block)
             ?: run {
@@ -25,11 +28,13 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
                 val ssoApiCallback = object : NextcloudAPI.ApiConnectedListener {
                     override fun onConnected() {
                         Log.d(TAG, "Api connected.")
-                        NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
-                            .create(ApiProvider::class.java).let {
-                                apiProvider = it
-                                block(it)
-                            }
+                        nextcloudAPI?.let { nextcloudAPI ->
+                            NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
+                                .create(ApiProvider::class.java).let {
+                                    apiProvider = it
+                                    block(it)
+                                }
+                        }
                     }
 
                     override fun onError(ex: Exception) {
@@ -38,7 +43,7 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
                 }
                 nextcloudAPI = NextcloudAPI(
                     context,
-                    account.getAccount(context) as SingleSignOnAccount,
+                    client,
                     GsonBuilder().create(),
                     ssoApiCallback
                 )
@@ -46,6 +51,7 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
     }
 
     override fun destroyProvider() {
-        nextcloudAPI.stop()
+        nextcloudAPI?.stop()
+        nextcloudAPI = null
     }
 }

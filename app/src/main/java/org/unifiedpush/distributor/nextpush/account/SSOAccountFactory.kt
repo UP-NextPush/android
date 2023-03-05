@@ -14,22 +14,20 @@ import androidx.appcompat.app.AlertDialog
 import com.nextcloud.android.sso.AccountImporter
 import com.nextcloud.android.sso.exceptions.* // ktlint-disable no-wildcard-imports
 import com.nextcloud.android.sso.helper.SingleAccountHelper
-import com.nextcloud.android.sso.model.SingleSignOnAccount
 import com.nextcloud.android.sso.ui.UiExceptionManager
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class SSOAccountFactory : AccountFactory {
     override var name: String? = null
-        get() = ssoAccount?.name
     override var url: String? = null
-        get() = ssoAccount?.url
-
-    private var ssoAccount: SingleSignOnAccount? = null
 
     override fun initAccount(context: Context): Boolean {
         try {
-            ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
+            SingleAccountHelper.getCurrentSingleSignOnAccount(context).let {
+                name = it.name
+                url = it.url
+            }
         } catch (e: NextcloudFilesAppAccountNotFoundException) {
             return false
         } catch (e: NoCurrentAccountSelectedException) {
@@ -65,26 +63,23 @@ class SSOAccountFactory : AccountFactory {
                 data,
                 activity
             ) { account ->
-                val context = activity.applicationContext
-
-                SingleAccountHelper.setCurrentAccount(context, account.name)
-
-                // Get the "default" account
-                try {
-                    ssoAccount = SingleAccountHelper.getCurrentSingleSignOnAccount(context)
-                    success = true
-                } catch (e: NextcloudFilesAppAccountNotFoundException) {
-                    nextcloudAppNotInstalledDialog(context)
-                } catch (e: NoCurrentAccountSelectedException) {
-                    UiExceptionManager.showDialogForException(context, e)
-                }
+                SingleAccountHelper.setCurrentAccount(activity.applicationContext, account.name)
+                success = true
             }
         } catch (_: AccountImportCancelledException) {}
         block(success)
     }
 
     override fun getAccount(context: Context): Any? {
-        return ssoAccount
+        return try {
+            SingleAccountHelper.getCurrentSingleSignOnAccount(context)
+        } catch (e: NextcloudFilesAppAccountNotFoundException) {
+            Log.w(TAG, "Nextcloud File is not found")
+            null
+        } catch (e: NoCurrentAccountSelectedException) {
+            Log.w(TAG, "No account selected")
+            null
+        }
     }
 
     override fun logout(context: Context) {

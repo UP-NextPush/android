@@ -16,16 +16,13 @@ class ApiDirectFactory(val context: Context) : ApiProviderFactory {
 
     override fun getProviderAndExecute(block: (ApiProvider) -> Unit) {
         val account = getAccount(context) ?: run {
-            Log.w(TAG, "No account found")
-            return
+            throw NoProviderException("No account found")
         }
         val url = account.url ?: run {
-            Log.w(TAG, "No url found")
-            return
+            throw NoProviderException("No url found")
         }
         val client = account.getAccount(context) as OkHttpClient? ?: run {
-            Log.w(TAG, "No client found")
-            return
+            throw NoProviderException("No client found")
         }
         apiProvider?.let(block)
             ?: run {
