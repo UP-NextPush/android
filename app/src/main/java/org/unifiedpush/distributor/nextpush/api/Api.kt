@@ -14,11 +14,8 @@ import org.unifiedpush.distributor.nextpush.account.Account.accountType
 import org.unifiedpush.distributor.nextpush.account.Account.deviceId
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.AccountType
-import org.unifiedpush.distributor.nextpush.api.provider.ApiDirectFactory
-import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider
+import org.unifiedpush.distributor.nextpush.api.provider.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
-import org.unifiedpush.distributor.nextpush.api.provider.ApiProviderFactory
-import org.unifiedpush.distributor.nextpush.api.provider.ApiSSOFactory
 import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
 import java.util.concurrent.TimeUnit
 
@@ -61,34 +58,37 @@ object Api {
                 Log.d(TAG, "No deviceId found.")
 
                 val parameters = mapOf("deviceName" to Build.MODEL)
-
-                withApiProvider { apiProvider ->
-                    apiProvider.createDevice(parameters)
-                        ?.subscribeOn(Schedulers.newThread())
-                        ?.observeOn(Schedulers.newThread())
-                        ?.subscribe(object : Observer<ApiResponse?> {
-                            override fun onSubscribe(d: Disposable) {
-                                Log.d(TAG, "onSubscribe")
-                            }
-
-                            override fun onNext(response: ApiResponse) {
-                                response.deviceId.let {
-                                    deviceId = it
+                try {
+                    withApiProvider { apiProvider ->
+                        apiProvider.createDevice(parameters)
+                            ?.subscribeOn(Schedulers.newThread())
+                            ?.observeOn(Schedulers.newThread())
+                            ?.subscribe(object : Observer<ApiResponse?> {
+                                override fun onSubscribe(d: Disposable) {
+                                    Log.d(TAG, "onSubscribe")
                                 }
-                            }
 
-                            override fun onError(e: Throwable) {
-                                e.printStackTrace()
-                            }
-
-                            override fun onComplete() {
-                                // Sync once it is registered
-                                deviceId?.let {
-                                    syncDevice(it)
+                                override fun onNext(response: ApiResponse) {
+                                    response.deviceId.let {
+                                        deviceId = it
+                                    }
                                 }
-                                Log.d(TAG, "mApi register: onComplete")
-                            }
-                        })
+
+                                override fun onError(e: Throwable) {
+                                    e.printStackTrace()
+                                }
+
+                                override fun onComplete() {
+                                    // Sync once it is registered
+                                    deviceId?.let {
+                                        syncDevice(it)
+                                    }
+                                    Log.d(TAG, "mApi register: onComplete")
+                                }
+                            })
+                    }
+                } catch (e: NoProviderException) {
+                    e.printStackTrace()
                 }
             }
     }
@@ -110,33 +110,36 @@ object Api {
 
     fun Context.apiDeleteDevice(block: () -> Unit = {}) {
         val deviceId = deviceId ?: return
-
-        withApiProvider { apiProvider ->
-            apiProvider.deleteDevice(deviceId)
-                ?.subscribeOn(Schedulers.newThread())
-                ?.observeOn(Schedulers.newThread())
-                ?.subscribe(object : Observer<ApiResponse?> {
-                    override fun onSubscribe(d: Disposable) {
-                        Log.d(TAG, "Subscribed to deleteDevice.")
-                    }
-
-                    override fun onNext(response: ApiResponse) {
-                        if (response.success) {
-                            Log.d(TAG, "Device successfully deleted.")
-                        } else {
-                            Log.d(TAG, "An error occurred while deleting the device.")
+        try {
+            withApiProvider { apiProvider ->
+                apiProvider.deleteDevice(deviceId)
+                    ?.subscribeOn(Schedulers.newThread())
+                    ?.observeOn(Schedulers.newThread())
+                    ?.subscribe(object : Observer<ApiResponse?> {
+                        override fun onSubscribe(d: Disposable) {
+                            Log.d(TAG, "Subscribed to deleteDevice.")
                         }
-                    }
 
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
+                        override fun onNext(response: ApiResponse) {
+                            if (response.success) {
+                                Log.d(TAG, "Device successfully deleted.")
+                            } else {
+                                Log.d(TAG, "An error occurred while deleting the device.")
+                            }
+                        }
 
-                    override fun onComplete() {
-                        block()
-                    }
-                })
-            this.deviceId = null
+                        override fun onError(e: Throwable) {
+                            e.printStackTrace()
+                        }
+
+                        override fun onComplete() {
+                            block()
+                        }
+                    })
+                this.deviceId = null
+            }
+        } catch (e: NoProviderException) {
+            e.printStackTrace()
         }
     }
 
@@ -151,63 +154,70 @@ object Api {
                 "appName" to appName
             )
         } ?: return
-
-        withApiProvider { apiProvider ->
-            apiProvider.createApp(parameters)
-                ?.subscribeOn(Schedulers.newThread())
-                ?.observeOn(Schedulers.newThread())
-                ?.subscribe(object : Observer<ApiResponse?> {
-                    override fun onSubscribe(d: Disposable) {
-                        Log.d(TAG, "Subscribed to createApp.")
-                    }
-
-                    override fun onNext(response: ApiResponse) {
-                        val nextpushToken = if (response.success) {
-                            Log.d(TAG, "App successfully created.")
-                            response.token
-                        } else {
-                            Log.d(TAG, "An error occurred while creating the application.")
-                            null
+        try {
+            withApiProvider { apiProvider ->
+                apiProvider.createApp(parameters)
+                    ?.subscribeOn(Schedulers.newThread())
+                    ?.observeOn(Schedulers.newThread())
+                    ?.subscribe(object : Observer<ApiResponse?> {
+                        override fun onSubscribe(d: Disposable) {
+                            Log.d(TAG, "Subscribed to createApp.")
                         }
-                        block(nextpushToken)
-                    }
 
-                    override fun onError(e: Throwable) {
-                        block(null)
-                        e.printStackTrace()
-                    }
+                        override fun onNext(response: ApiResponse) {
+                            val nextpushToken = if (response.success) {
+                                Log.d(TAG, "App successfully created.")
+                                response.token
+                            } else {
+                                Log.d(TAG, "An error occurred while creating the application.")
+                                null
+                            }
+                            block(nextpushToken)
+                        }
 
-                    override fun onComplete() {}
-                })
+                        override fun onError(e: Throwable) {
+                            block(null)
+                            e.printStackTrace()
+                        }
+
+                        override fun onComplete() {}
+                    })
+            }
+        } catch (e: NoProviderException) {
+            e.printStackTrace()
         }
     }
 
     fun Context.apiDeleteApp(nextpushToken: String, block: () -> Unit) {
-        withApiProvider { apiProvider ->
-            apiProvider.deleteApp(nextpushToken)
-                ?.subscribeOn(Schedulers.newThread())
-                ?.observeOn(Schedulers.newThread())
-                ?.subscribe(object : Observer<ApiResponse?> {
-                    override fun onSubscribe(d: Disposable) {
-                        Log.d(TAG, "Subscribed to deleteApp.")
-                    }
-
-                    override fun onNext(response: ApiResponse) {
-                        if (response.success) {
-                            Log.d(TAG, "App successfully deleted.")
-                        } else {
-                            Log.d(TAG, "An error occurred while deleting the application.")
+        try {
+            withApiProvider { apiProvider ->
+                apiProvider.deleteApp(nextpushToken)
+                    ?.subscribeOn(Schedulers.newThread())
+                    ?.observeOn(Schedulers.newThread())
+                    ?.subscribe(object : Observer<ApiResponse?> {
+                        override fun onSubscribe(d: Disposable) {
+                            Log.d(TAG, "Subscribed to deleteApp.")
                         }
-                    }
 
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
+                        override fun onNext(response: ApiResponse) {
+                            if (response.success) {
+                                Log.d(TAG, "App successfully deleted.")
+                            } else {
+                                Log.d(TAG, "An error occurred while deleting the application.")
+                            }
+                        }
 
-                    override fun onComplete() {
-                        block()
-                    }
-                })
+                        override fun onError(e: Throwable) {
+                            e.printStackTrace()
+                        }
+
+                        override fun onComplete() {
+                            block()
+                        }
+                    })
+            }
+        } catch (e: NoProviderException) {
+            e.printStackTrace()
         }
     }
 }
