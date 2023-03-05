@@ -88,11 +88,11 @@ class MainActivity : AppCompatActivity() {
         alert.setMessage(R.string.logout_alert_content)
         alert.setPositiveButton(R.string.ok) { dialog, _ ->
             dialog.dismiss()
-            getAccount(this)?.logout(this)
             deleteDevice(this) {
                 StartService.stopService()
                 FailureHandler.clearFails()
             }
+            getAccount(this)?.logout(this)
             finish()
             goToStartActivity(this)
         }
