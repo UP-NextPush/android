@@ -9,8 +9,7 @@ import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiDirectFactory(val context: Context) : ApiProviderFactory {
-
-    override fun getProviderAndExecute(block: (ApiProvider) -> Unit) {
+    override fun getProviderAndExecute(block: (ApiProvider, then: () -> Unit) -> Unit) {
         val account = getAccount(context) ?: run {
             throw NoProviderException("No account found")
         }
@@ -26,7 +25,7 @@ class ApiDirectFactory(val context: Context) : ApiProviderFactory {
             .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .baseUrl("$url$mApiEndpoint").build()
             .create(ApiProvider::class.java).let {
-                block(it)
+                block(it) {}
             }
     }
 }

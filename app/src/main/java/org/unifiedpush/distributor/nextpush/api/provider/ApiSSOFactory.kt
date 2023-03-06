@@ -12,7 +12,7 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
 
     private val TAG = ApiSSOFactory::class.java.simpleName
 
-    override fun getProviderAndExecute(block: (ApiProvider) -> Unit) {
+    override fun getProviderAndExecute(block: (ApiProvider, then: () -> Unit) -> Unit) {
         var nextcloudAPI: NextcloudAPI? = null
         val account = getAccount(context) ?: run {
             throw NoProviderException("No account found")
@@ -26,7 +26,9 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
                 nextcloudAPI?.let { nextcloudAPI ->
                     NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
                         .create(ApiProvider::class.java).let {
-                            block(it)
+                            block(it) {
+                                nextcloudAPI.stop()
+                            }
                         }
                 }
             }

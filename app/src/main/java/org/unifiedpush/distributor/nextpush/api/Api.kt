@@ -26,7 +26,7 @@ class Api(val context: Context) {
     private val baseUrl: String
         get() = getAccount(context)?.url ?: "http://0.0.0.0/"
 
-    private fun withApiProvider(block: (ApiProvider) -> Unit) {
+    private fun withApiProvider(block: (ApiProvider, then: () -> Unit) -> Unit) {
         when (context.accountType) {
             AccountType.SSO -> ApiSSOFactory(context)
             AccountType.Direct -> ApiDirectFactory(context)
@@ -48,7 +48,7 @@ class Api(val context: Context) {
 
                 val parameters = mapOf("deviceName" to Build.MODEL)
                 try {
-                    withApiProvider { apiProvider ->
+                    withApiProvider { apiProvider, then ->
                         apiProvider.createDevice(parameters)
                             ?.subscribeOn(Schedulers.io())
                             ?.observeOn(AndroidSchedulers.mainThread())
@@ -69,6 +69,7 @@ class Api(val context: Context) {
                                         syncDevice(it)
                                     }
                                     Log.d(TAG, "mApi register: onComplete")
+                                    then()
                                 }
                             })
                     }
@@ -96,7 +97,7 @@ class Api(val context: Context) {
     fun apiDeleteDevice(block: () -> Unit = {}) {
         val deviceId = context.deviceId ?: return
         try {
-            withApiProvider { apiProvider ->
+            withApiProvider { apiProvider, then ->
                 apiProvider.deleteDevice(deviceId)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
@@ -115,6 +116,7 @@ class Api(val context: Context) {
 
                         override fun onComplete() {
                             block()
+                            then()
                         }
                     })
                 context.deviceId = null
@@ -136,7 +138,7 @@ class Api(val context: Context) {
             )
         } ?: return
         try {
-            withApiProvider { apiProvider ->
+            withApiProvider { apiProvider, then ->
                 apiProvider.createApp(parameters)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
@@ -157,7 +159,9 @@ class Api(val context: Context) {
                             e.printStackTrace()
                         }
 
-                        override fun onComplete() {}
+                        override fun onComplete() {
+                            then()
+                        }
                     })
             }
         } catch (e: NoProviderException) {
@@ -167,7 +171,7 @@ class Api(val context: Context) {
 
     fun apiDeleteApp(nextpushToken: String, block: () -> Unit) {
         try {
-            withApiProvider { apiProvider ->
+            withApiProvider { apiProvider, then ->
                 apiProvider.deleteApp(nextpushToken)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
@@ -186,6 +190,7 @@ class Api(val context: Context) {
 
                         override fun onComplete() {
                             block()
+                            then()
                         }
                     })
             }
