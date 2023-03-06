@@ -3,9 +3,9 @@ package org.unifiedpush.distributor.nextpush.api
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.observers.DisposableObserver
+import io.reactivex.rxjava3.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.sse.EventSource
@@ -50,13 +50,9 @@ class Api(val context: Context) {
                 try {
                     withApiProvider { apiProvider ->
                         apiProvider.createDevice(parameters)
-                            ?.subscribeOn(Schedulers.newThread())
-                            ?.observeOn(Schedulers.newThread())
-                            ?.subscribe(object : Observer<ApiResponse?> {
-                                override fun onSubscribe(d: Disposable) {
-                                    Log.d(TAG, "onSubscribe")
-                                }
-
+                            ?.subscribeOn(Schedulers.io())
+                            ?.observeOn(AndroidSchedulers.mainThread())
+                            ?.subscribe(object : DisposableObserver<ApiResponse?>() {
                                 override fun onNext(response: ApiResponse) {
                                     response.deviceId.let {
                                         context.deviceId = it
@@ -102,13 +98,9 @@ class Api(val context: Context) {
         try {
             withApiProvider { apiProvider ->
                 apiProvider.deleteDevice(deviceId)
-                    ?.subscribeOn(Schedulers.newThread())
-                    ?.observeOn(Schedulers.newThread())
-                    ?.subscribe(object : Observer<ApiResponse?> {
-                        override fun onSubscribe(d: Disposable) {
-                            Log.d(TAG, "Subscribed to deleteDevice.")
-                        }
-
+                    ?.subscribeOn(Schedulers.io())
+                    ?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
                         override fun onNext(response: ApiResponse) {
                             if (response.success) {
                                 Log.d(TAG, "Device successfully deleted.")
@@ -146,13 +138,9 @@ class Api(val context: Context) {
         try {
             withApiProvider { apiProvider ->
                 apiProvider.createApp(parameters)
-                    ?.subscribeOn(Schedulers.newThread())
-                    ?.observeOn(Schedulers.newThread())
-                    ?.subscribe(object : Observer<ApiResponse?> {
-                        override fun onSubscribe(d: Disposable) {
-                            Log.d(TAG, "Subscribed to createApp.")
-                        }
-
+                    ?.subscribeOn(Schedulers.io())
+                    ?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
                         override fun onNext(response: ApiResponse) {
                             val nextpushToken = if (response.success) {
                                 Log.d(TAG, "App successfully created.")
@@ -181,13 +169,9 @@ class Api(val context: Context) {
         try {
             withApiProvider { apiProvider ->
                 apiProvider.deleteApp(nextpushToken)
-                    ?.subscribeOn(Schedulers.newThread())
-                    ?.observeOn(Schedulers.newThread())
-                    ?.subscribe(object : Observer<ApiResponse?> {
-                        override fun onSubscribe(d: Disposable) {
-                            Log.d(TAG, "Subscribed to deleteApp.")
-                        }
-
+                    ?.subscribeOn(Schedulers.io())
+                    ?.observeOn(AndroidSchedulers.mainThread())
+                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
                         override fun onNext(response: ApiResponse) {
                             if (response.success) {
                                 Log.d(TAG, "App successfully deleted.")

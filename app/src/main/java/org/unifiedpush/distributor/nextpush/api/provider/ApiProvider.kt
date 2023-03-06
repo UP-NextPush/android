@@ -1,6 +1,6 @@
 package org.unifiedpush.distributor.nextpush.api.provider
 
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE

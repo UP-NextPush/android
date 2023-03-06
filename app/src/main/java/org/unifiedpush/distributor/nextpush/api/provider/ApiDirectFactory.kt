@@ -5,7 +5,7 @@ import okhttp3.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import retrofit2.Retrofit
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiDirectFactory(val context: Context) : ApiProviderFactory {
@@ -23,7 +23,7 @@ class ApiDirectFactory(val context: Context) : ApiProviderFactory {
         Retrofit.Builder()
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .baseUrl("$url$mApiEndpoint").build()
             .create(ApiProvider::class.java).let {
                 block(it)
