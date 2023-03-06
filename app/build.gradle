@@ -58,7 +58,7 @@ dependencies {
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     implementation("com.squareup.okhttp3:okhttp-sse:4.10.0")
     //implementation("com.github.nextcloud:Android-SingleSignOn:0.6.1")
-    implementation("com.github.p1gp1g:Android-SingleSignOn:0.6.1-4")
+    implementation("com.github.p1gp1g:Android-SingleSignOn:1.6.1-1")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
     implementation("com.squareup.retrofit2:adapter-rxjava3:$retrofitVersion")
