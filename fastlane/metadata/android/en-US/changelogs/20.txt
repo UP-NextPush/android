@@ -1,0 +1,4 @@
+- Fix device deletion at logout
+- Prevent restart when logout
+- Some optimizations
+- Bump dependencies
