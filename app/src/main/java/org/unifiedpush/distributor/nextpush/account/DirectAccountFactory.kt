@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import okhttp3.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.activities.StartActivity
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
@@ -38,9 +39,14 @@ class DirectAccountFactory : AccountFactory {
         val client = getAccount(activity) as OkHttpClient? ?: return retActivity(activity)
         val url = activity.url ?: return retActivity(activity)
 
-        val request = Request.Builder()
-            .url("$url/$mApiEndpoint/")
-            .build()
+        val request = try {
+            Request.Builder()
+                .url("$url/$mApiEndpoint/")
+                .build()
+        } catch (e: IllegalArgumentException) {
+            Toast.makeText(activity, "Expected URL scheme 'http' or 'https'", Toast.LENGTH_SHORT).show()
+            return retActivity(activity)
+        }
 
         val call = client.newCall(request)
         call.enqueue(object : Callback {
