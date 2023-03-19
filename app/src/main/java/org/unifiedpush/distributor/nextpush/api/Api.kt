@@ -112,6 +112,8 @@ class Api(val context: Context) {
 
                         override fun onError(e: Throwable) {
                             e.printStackTrace()
+                            block()
+                            then()
                         }
 
                         override fun onComplete() {
