@@ -61,6 +61,7 @@ class Api(val context: Context) {
 
                                 override fun onError(e: Throwable) {
                                     e.printStackTrace()
+                                    then()
                                 }
 
                                 override fun onComplete() {
@@ -157,8 +158,9 @@ class Api(val context: Context) {
                         }
 
                         override fun onError(e: Throwable) {
-                            block(null)
                             e.printStackTrace()
+                            block(null)
+                            then()
                         }
 
                         override fun onComplete() {
@@ -188,6 +190,7 @@ class Api(val context: Context) {
 
                         override fun onError(e: Throwable) {
                             e.printStackTrace()
+                            then()
                         }
 
                         override fun onComplete() {
