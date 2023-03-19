@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import com.google.android.material.textfield.TextInputEditText
@@ -74,6 +75,8 @@ class StartActivity : AppCompatActivity() {
                 if (success) {
                     goToMainActivity(this)
                     finish()
+                } else {
+                    Toast.makeText(applicationContext, "Could not connect to UnifiedPush provider", Toast.LENGTH_SHORT).show()
                 }
             }
         }

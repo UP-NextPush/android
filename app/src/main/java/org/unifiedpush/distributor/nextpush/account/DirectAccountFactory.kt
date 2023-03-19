@@ -91,7 +91,9 @@ class DirectAccountFactory : AccountFactory {
     }
 
     private fun retActivity(activity: Activity) {
-        (activity as StartActivity).onActivityResult(0, 0, null)
+        activity.runOnUiThread {
+            (activity as StartActivity).onActivityResult(0, 0, null)
+        }
     }
 
     inner class DirectAuth(private val username: String, private val password: String) : Authenticator {
