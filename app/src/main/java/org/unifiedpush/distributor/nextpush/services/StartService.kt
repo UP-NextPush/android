@@ -50,6 +50,8 @@ class StartService : Service() {
         if (isServiceStarted) {
             Log.d(TAG, "onDestroy: restarting worker")
             RestartWorker.run(this, delay = 0)
+        } else {
+            networkCallback.unregister()
         }
     }
 

@@ -15,7 +15,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
     override fun onAvailable(network: Network) {
         Log.d(TAG, "Network is CONNECTED")
         if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
-            Log.d(TAG, "networkCallback: restarting worker")
+            Log.d(TAG, "Available: restarting worker")
             RestartWorker.run(context, delay = 0)
         }
     }
@@ -24,26 +24,36 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         network: Network,
         networkCapabilities: NetworkCapabilities
     ) {
-        Log.d(TAG, "Network Capabilities changed")
-        if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
-            Log.d(TAG, "networkCallback: restarting worker")
-            RestartWorker.run(context, delay = 0)
-        } // else, it retries in max 2sec
+        if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+            if (!hasInternet) {
+                hasInternet = true
+                Log.d(TAG, "Network Capabilities changed")
+                if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
+                    Log.d(TAG, "Internet Cap: restarting worker")
+                    RestartWorker.run(context, delay = 0)
+                } // else, it retries in max 2sec
+            }
+        } else {
+            hasInternet = false
+        }
     }
 
     fun register() {
-        connectivityManager?.let {
-            Log.d(TAG, "ConnectivityManager already registered")
-        } ?: run {
-            Log.d(TAG, "Registering new ConnectivityManager")
-            try {
-                connectivityManager = (
-                    context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
-                    ).apply {
-                    registerDefaultNetworkCallback(this@RestartNetworkCallback)
+        if (!registered) {
+            registered = true
+            connectivityManager?.let {
+                Log.d(TAG, "ConnectivityManager already registered")
+            } ?: run {
+                Log.d(TAG, "Registering new ConnectivityManager")
+                try {
+                    connectivityManager = (
+                        context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
+                        ).apply {
+                        registerDefaultNetworkCallback(this@RestartNetworkCallback)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
@@ -52,5 +62,12 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         Log.d(TAG, "Unregistering ConnectivityManager")
         connectivityManager?.unregisterNetworkCallback(this)
         connectivityManager = null
+        registered = false
+        hasInternet = false
+    }
+
+    companion object {
+        private var registered = false
+        private var hasInternet = false
     }
 }
