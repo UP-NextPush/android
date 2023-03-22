@@ -58,5 +58,9 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
                 work.build()
             )
         }
+
+        fun stopPeriodic(context: Context) {
+            WorkManager.getInstance(context).cancelAllWorkByTag(UNIQUE_PERIODIC_WORK_TAG)
+        }
     }
 }

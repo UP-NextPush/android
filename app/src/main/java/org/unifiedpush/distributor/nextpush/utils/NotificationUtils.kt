@@ -130,6 +130,53 @@ object NotificationUtils {
         warningShown = true
     }
 
+    fun createStartErrorNotification(context: Context) {
+        val notificationChannelId = "${context.getString(R.string.app_name)}.StartError"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channel = NotificationChannel(
+                notificationChannelId,
+                "Start error",
+                NotificationManager.IMPORTANCE_HIGH
+            ).let {
+                it.description = context.getString(R.string.start_error_notif_description)
+                it
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val builder: Notification.Builder = (
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(
+                    context,
+                    notificationChannelId
+                )
+            } else {
+                Notification.Builder(context)
+            }
+            ).setContentTitle(context.getString(R.string.app_name))
+            .setContentText(context.getString(R.string.start_error_notif_content))
+            .setStyle(
+                Notification.BigTextStyle()
+                    .bigText(context.getString(R.string.start_error_notif_content))
+            )
+            .setSmallIcon(R.drawable.ic_logo)
+            .setTicker(context.getString(R.string.start_error_notif_ticker))
+            .setPriority(Notification.PRIORITY_HIGH) // for under android 26 compatibility
+
+        with(NotificationManagerCompat.from(context)) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(NOTIFICATION_ID_WARNING, builder.build())
+            }
+        }
+    }
+
     fun deleteWarningNotification(context: Context) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

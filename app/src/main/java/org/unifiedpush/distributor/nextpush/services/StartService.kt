@@ -52,6 +52,7 @@ class StartService : Service() {
             RestartWorker.run(this, delay = 0)
         } else {
             networkCallback.unregister()
+            RestartWorker.stopPeriodic(this)
         }
     }
 

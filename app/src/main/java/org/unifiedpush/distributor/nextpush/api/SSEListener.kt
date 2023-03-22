@@ -7,12 +7,14 @@ import com.google.gson.Gson
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import org.unifiedpush.distributor.nextpush.account.Account.hasStartedOnce
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
 import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createStartErrorNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
@@ -39,6 +41,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         lastEventDate = Calendar.getInstance()
 
         when (type) {
+            "start" -> context.hasStartedOnce = true
             "keepalive" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
                 keepalive = message.keepalive
@@ -65,21 +68,17 @@ class SSEListener(val context: Context) : EventSourceListener() {
     }
 
     override fun onClosed(eventSource: EventSource) {
-        eventSource.cancel()
-        if (!StartService.isServiceStarted) {
-            return
-        }
         Log.d(TAG, "onClosed: $eventSource")
+        eventSource.cancel()
+        if (!shouldRestart()) return
         FailureHandler.newFail(context, eventSource)
         RestartWorker.run(context, delay = 0)
     }
 
     override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-        eventSource.cancel()
-        if (!StartService.isServiceStarted) {
-            return
-        }
         Log.d(TAG, "onFailure")
+        eventSource.cancel()
+        if (!shouldRestart()) return
         t?.let {
             Log.d(TAG, "An error occurred: $t")
         }
@@ -98,6 +97,21 @@ class SSEListener(val context: Context) : EventSourceListener() {
         }.toLong()
         Log.d(TAG, "Retrying in $delay s")
         RestartWorker.run(context, delay = delay)
+    }
+
+    private fun shouldRestart(): Boolean {
+        if (!StartService.isServiceStarted) {
+            Log.d(TAG, "StartService not started")
+            return false
+        }
+        if (!context.hasStartedOnce) {
+            Log.d(TAG, "SSE event 'start' never received")
+            Log.d(TAG, "Stopping service")
+            StartService.stopService()
+            createStartErrorNotification(context)
+            return false
+        }
+        return true
     }
 
     companion object {

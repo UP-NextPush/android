@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
 import androidx.appcompat.app.AppCompatActivity
 import org.unifiedpush.distributor.nextpush.R
+import org.unifiedpush.distributor.nextpush.account.Account
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.activities.PermissionsRequest.requestAppPermissions
@@ -92,7 +93,7 @@ class MainActivity : AppCompatActivity() {
                 StartService.stopService()
                 FailureHandler.clearFails()
             }
-            getAccount(this)?.logout(this)
+            Account.logout(this)
             finish()
             goToStartActivity(this)
         }
