@@ -33,9 +33,12 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
                     RestartWorker.run(context, delay = 0)
                 } // else, it retries in max 2sec
             }
-        } else {
-            hasInternet = false
         }
+    }
+
+    override fun onLost(network: Network) {
+        Log.d(TAG, "Network unavailable")
+        hasInternet = false
     }
 
     fun register() {
