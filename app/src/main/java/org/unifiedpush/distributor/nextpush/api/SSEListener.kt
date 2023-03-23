@@ -12,6 +12,7 @@ import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
 import org.unifiedpush.distributor.nextpush.services.FailureHandler
+import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createStartErrorNotification
@@ -84,6 +85,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
         }
         response?.let {
             Log.d(TAG, "onFailure: ${it.code}")
+        }
+        if (!RestartNetworkCallback.hasInternet) {
+            Log.d(TAG, "No Internet: do not restart")
+            FailureHandler.once(eventSource)
+            return
         }
         FailureHandler.newFail(context, eventSource)
         val delay = when (FailureHandler.nFails) {

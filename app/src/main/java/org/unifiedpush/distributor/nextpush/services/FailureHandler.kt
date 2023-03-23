@@ -29,9 +29,20 @@ object FailureHandler {
         if (this.eventSource == null || this.eventSource == eventSource) {
             Log.d(TAG, "EventSource is known or null")
             nFails++
-            if (hasFailed(twice = true)) {
+            if (nFails == 2) {
                 createWarningNotification(context)
             }
+            this.eventSource = null
+        }
+    }
+
+    fun once(eventSource: EventSource?) {
+        Log.d(TAG, "once/Eventsource: $eventSource")
+        // ignore fails from a possible old eventSource
+        // if we are already reconnected
+        if (this.eventSource == null || this.eventSource == eventSource) {
+            Log.d(TAG, "EventSource is known or null")
+            nFails = 1
             this.eventSource = null
         }
     }
@@ -49,9 +60,8 @@ object FailureHandler {
         eventSource = null
     }
 
-    fun hasFailed(twice: Boolean = false, orNeverStart: Boolean = true): Boolean {
+    fun hasFailed(orNeverStart: Boolean = true): Boolean {
         // nFails > 0 to be sure it is not actually restarting
-        return if (orNeverStart) { eventSource == null } else { false } ||
-            nFails > if (twice) { 1 } else { 0 }
+        return if (orNeverStart) { eventSource == null } else { false } || nFails > 0
     }
 }

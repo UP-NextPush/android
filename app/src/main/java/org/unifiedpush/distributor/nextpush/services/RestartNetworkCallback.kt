@@ -14,7 +14,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
 
     override fun onAvailable(network: Network) {
         Log.d(TAG, "Network is CONNECTED")
-        if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
+        if (FailureHandler.hasFailed(orNeverStart = false)) {
             Log.d(TAG, "Available: restarting worker")
             RestartWorker.run(context, delay = 0)
         }
@@ -28,7 +28,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
             if (!hasInternet) {
                 hasInternet = true
                 Log.d(TAG, "Network Capabilities changed")
-                if (FailureHandler.hasFailed(twice = true, orNeverStart = false)) {
+                if (FailureHandler.hasFailed(orNeverStart = false)) {
                     Log.d(TAG, "Internet Cap: restarting worker")
                     RestartWorker.run(context, delay = 0)
                 } // else, it retries in max 2sec
@@ -71,6 +71,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
 
     companion object {
         private var registered = false
-        private var hasInternet = false
+        var hasInternet = false
+            private set
     }
 }
