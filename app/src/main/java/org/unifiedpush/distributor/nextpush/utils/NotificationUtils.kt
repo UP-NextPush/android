@@ -16,7 +16,6 @@ import org.unifiedpush.distributor.nextpush.activities.MainActivity
 
 const val NOTIFICATION_ID_FOREGROUND = 51115
 const val NOTIFICATION_ID_WARNING = 51215
-const val NOTIFICATION_ID_START_ERROR = 51315
 
 private data class ChannelData(
     val id: String,
@@ -34,6 +33,8 @@ private data class NotificationData(
 )
 object NotificationUtils {
 
+    private val Context.WARNING_CHANNEL_ID
+        get() = "${this.getString(R.string.app_name)}.Warning"
     private var warningShown = false
 
     private fun createNotificationChannel(context: Context, channelData: ChannelData) {
@@ -139,7 +140,7 @@ object NotificationUtils {
         if (warningShown) {
             return
         }
-        val notificationChannelId = "${context.getString(R.string.app_name)}.Warning"
+        val notificationChannelId = context.WARNING_CHANNEL_ID
 
         createNotificationChannel(
             context,
@@ -169,16 +170,23 @@ object NotificationUtils {
         warningShown = true
     }
 
+    fun deleteWarningNotification(context: Context) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIFICATION_ID_WARNING)
+        warningShown = false
+    }
+
     fun showStartErrorNotification(context: Context) {
-        val notificationChannelId = "${context.getString(R.string.app_name)}.StartError"
+        val notificationChannelId = context.WARNING_CHANNEL_ID
 
         createNotificationChannel(
             context,
             ChannelData(
                 notificationChannelId,
-                "Start error",
+                "Warning",
                 NotificationManager.IMPORTANCE_HIGH,
-                context.getString(R.string.start_error_notif_description)
+                context.getString(R.string.warning_notif_description)
             )
         )
 
@@ -186,7 +194,7 @@ object NotificationUtils {
             context,
             NotificationData(
                 context.getString(R.string.start_error_notif_content),
-                context.getString(R.string.start_error_notif_ticker),
+                context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
                 false,
                 notificationChannelId
@@ -195,13 +203,35 @@ object NotificationUtils {
             true
         )
 
-        show(context, NOTIFICATION_ID_START_ERROR, notification)
+        show(context, NOTIFICATION_ID_WARNING, notification)
     }
 
-    fun deleteWarningNotification(context: Context) {
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID_WARNING)
-        warningShown = false
+    fun showLowKeepaliveNotification(context: Context, keepalive: Int) {
+        val notificationChannelId = context.WARNING_CHANNEL_ID
+
+        createNotificationChannel(
+            context,
+            ChannelData(
+                notificationChannelId,
+                "Warning",
+                NotificationManager.IMPORTANCE_HIGH,
+                context.getString(R.string.warning_notif_description)
+            )
+        )
+
+        val notification = createNotification(
+            context,
+            NotificationData(
+                context.getString(R.string.low_keepalive_notif_content).format(keepalive),
+                context.getString(R.string.warning_notif_ticker),
+                Notification.PRIORITY_HIGH,
+                false,
+                notificationChannelId
+            ),
+            null,
+            true
+        )
+
+        show(context, NOTIFICATION_ID_WARNING, notification)
     }
 }

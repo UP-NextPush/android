@@ -15,6 +15,7 @@ import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showLowKeepaliveNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showStartErrorNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
@@ -47,6 +48,9 @@ class SSEListener(val context: Context) : EventSourceListener() {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
                 keepalive = message.keepalive
                 Log.d(TAG, "New keepalive: $keepalive")
+                if (keepalive < 25) {
+                    showLowKeepaliveNotification(context, keepalive)
+                }
             }
             "message" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
