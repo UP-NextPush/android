@@ -3,8 +3,8 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import okhttp3.sse.EventSource
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createWarningNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.deleteWarningNotification
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showWarningNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 object FailureHandler {
@@ -30,7 +30,7 @@ object FailureHandler {
             Log.d(TAG, "EventSource is known or null")
             nFails++
             if (nFails == 2) {
-                createWarningNotification(context)
+                showWarningNotification(context)
             }
             this.eventSource = null
         }
@@ -52,7 +52,7 @@ object FailureHandler {
         // and keep it running
         nFails = 5
         eventSource = null
-        createWarningNotification(context)
+        showWarningNotification(context)
     }
 
     fun clearFails() {

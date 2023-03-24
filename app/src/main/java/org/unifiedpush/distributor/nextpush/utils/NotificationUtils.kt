@@ -16,44 +16,48 @@ import org.unifiedpush.distributor.nextpush.activities.MainActivity
 
 const val NOTIFICATION_ID_FOREGROUND = 51115
 const val NOTIFICATION_ID_WARNING = 51215
+const val NOTIFICATION_ID_START_ERROR = 51315
 
+private data class ChannelData(
+    val id: String,
+    val name: String,
+    val importance: Int,
+    val description: String
+)
+
+private data class NotificationData(
+    val text: String,
+    val ticker: String,
+    val priority: Int,
+    val ongoing: Boolean,
+    val channelId: String
+)
 object NotificationUtils {
 
     private var warningShown = false
 
-    fun createForegroundNotification(context: Context): Notification {
-        val notificationChannelId = "${context.getString(R.string.app_name)}.Listener"
-
+    private fun createNotificationChannel(context: Context, channelData: ChannelData) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channel = NotificationChannel(
-                notificationChannelId,
-                "Foreground service",
-                NotificationManager.IMPORTANCE_LOW
+                channelData.id,
+                channelData.name,
+                channelData.importance
             ).let {
-                it.description = context.getString(R.string.foreground_notif_description)
+                it.description = channelData.description
                 it
             }
             notificationManager.createNotificationChannel(channel)
         }
+    }
 
-        val notificationIntent = Intent(context, MainActivity::class.java)
-
-        notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-        val intent = PendingIntent.getActivity(
-            context,
-            0,
-            notificationIntent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
+    private fun createNotification(context: Context, notificationData: NotificationData, intent: PendingIntent?, bigText: Boolean = false): Notification {
         val builder: Notification.Builder =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Notification.Builder(
                     context,
-                    notificationChannelId
+                    notificationData.channelId
                 )
             } else {
                 Notification.Builder(context)
@@ -61,120 +65,137 @@ object NotificationUtils {
 
         return builder
             .setContentTitle(context.getString(R.string.app_name))
-            .setContentText(context.getString(R.string.foreground_notif_description))
+            .setContentText(notificationData.text)
             .setSmallIcon(R.drawable.ic_logo)
-            .setTicker(context.getString(R.string.foreground_notif_ticker))
-            .setPriority(Notification.PRIORITY_LOW) // for under android 26 compatibility
-            .setContentIntent(intent)
-            .setOngoing(true)
+            .setTicker(notificationData.ticker)
+            .setOngoing(notificationData.ongoing)
+            .setPriority(notificationData.priority) // for under android 26 compatibility
+            .apply {
+                intent?.let {
+                    setContentIntent(intent)
+                }
+                if (bigText) {
+                    style = Notification.BigTextStyle()
+                        .bigText(notificationData.text)
+                }
+            }
             .build()
     }
 
-    fun createWarningNotification(context: Context) {
-        if (warningShown) {
-            return
-        }
-        val notificationChannelId = "${context.getString(R.string.app_name)}.Warning"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(
-                notificationChannelId,
-                "Warning",
-                NotificationManager.IMPORTANCE_HIGH
-            ).let {
-                it.description = context.getString(R.string.warning_notif_description)
-                it
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
+    private fun createIntentToMain(context: Context): PendingIntent {
         val notificationIntent = Intent(context, MainActivity::class.java)
 
         notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
-        val intent = PendingIntent.getActivity(
+        return PendingIntent.getActivity(
             context,
             0,
             notificationIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
+    }
 
-        val builder: Notification.Builder = (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder(
-                    context,
-                    notificationChannelId
-                )
-            } else {
-                Notification.Builder(context)
-            }
-            ).setContentTitle(context.getString(R.string.app_name))
-            .setContentText(context.getString(R.string.warning_notif_description))
-            .setSmallIcon(R.drawable.ic_logo)
-            .setTicker(context.getString(R.string.warning_notif_ticker))
-            .setPriority(Notification.PRIORITY_HIGH) // for under android 26 compatibility
-            .setContentIntent(intent)
-            .setOngoing(true)
-
+    private fun show(context: Context, id: Int, notification: Notification) {
         with(NotificationManagerCompat.from(context)) {
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                notify(NOTIFICATION_ID_WARNING, builder.build())
+                notify(id, notification)
             }
         }
+    }
+
+    fun createForegroundNotification(context: Context): Notification {
+        val notificationChannelId = "${context.getString(R.string.app_name)}.Listener"
+
+        createNotificationChannel(
+            context,
+            ChannelData(
+                notificationChannelId,
+                "Foreground Service",
+                NotificationManager.IMPORTANCE_LOW,
+                context.getString(R.string.foreground_notif_description)
+            )
+        )
+
+        val intent = createIntentToMain(context)
+
+        return createNotification(
+            context,
+            NotificationData(
+                context.getString(R.string.foreground_notif_description),
+                context.getString(R.string.foreground_notif_ticker),
+                Notification.PRIORITY_LOW,
+                true,
+                notificationChannelId
+            ),
+            intent
+        )
+    }
+
+    fun showWarningNotification(context: Context) {
+        if (warningShown) {
+            return
+        }
+        val notificationChannelId = "${context.getString(R.string.app_name)}.Warning"
+
+        createNotificationChannel(
+            context,
+            ChannelData(
+                notificationChannelId,
+                "Warning",
+                NotificationManager.IMPORTANCE_HIGH,
+                context.getString(R.string.warning_notif_description)
+            )
+        )
+
+        val intent = createIntentToMain(context)
+
+        val notification = createNotification(
+            context,
+            NotificationData(
+                context.getString(R.string.warning_notif_content),
+                context.getString(R.string.warning_notif_ticker),
+                Notification.PRIORITY_HIGH,
+                true,
+                notificationChannelId
+            ),
+            intent
+        )
+
+        show(context, NOTIFICATION_ID_WARNING, notification)
         warningShown = true
     }
 
-    fun createStartErrorNotification(context: Context) {
+    fun showStartErrorNotification(context: Context) {
         val notificationChannelId = "${context.getString(R.string.app_name)}.StartError"
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(
+        createNotificationChannel(
+            context,
+            ChannelData(
                 notificationChannelId,
                 "Start error",
-                NotificationManager.IMPORTANCE_HIGH
-            ).let {
-                it.description = context.getString(R.string.start_error_notif_description)
-                it
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val builder: Notification.Builder = (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder(
-                    context,
-                    notificationChannelId
-                )
-            } else {
-                Notification.Builder(context)
-            }
-            ).setContentTitle(context.getString(R.string.app_name))
-            .setContentText(context.getString(R.string.start_error_notif_content))
-            .setStyle(
-                Notification.BigTextStyle()
-                    .bigText(context.getString(R.string.start_error_notif_content))
+                NotificationManager.IMPORTANCE_HIGH,
+                context.getString(R.string.start_error_notif_description)
             )
-            .setSmallIcon(R.drawable.ic_logo)
-            .setTicker(context.getString(R.string.start_error_notif_ticker))
-            .setPriority(Notification.PRIORITY_HIGH) // for under android 26 compatibility
+        )
 
-        with(NotificationManagerCompat.from(context)) {
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                notify(NOTIFICATION_ID_WARNING, builder.build())
-            }
-        }
+        val notification = createNotification(
+            context,
+            NotificationData(
+                context.getString(R.string.start_error_notif_content),
+                context.getString(R.string.start_error_notif_ticker),
+                Notification.PRIORITY_HIGH,
+                false,
+                notificationChannelId
+            ),
+            null,
+            true
+        )
+
+        show(context, NOTIFICATION_ID_START_ERROR, notification)
     }
 
     fun deleteWarningNotification(context: Context) {

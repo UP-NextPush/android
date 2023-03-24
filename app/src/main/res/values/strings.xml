@@ -18,7 +18,8 @@
     <string name="start_error_notif_content">The service could not be started correctly. Check the configuration of your server.</string>
     <string name="start_error_notif_description">The service can not start correctly</string>
     <string name="start_error_notif_ticker">Error</string>
-    <string name="warning_notif_description">NextPush is disconnected</string>
+    <string name="warning_notif_content">NextPush is disconnected</string>
+    <string name="warning_notif_description">Warn when NextPush is disconnected</string>
     <string name="warning_notif_ticker">Warning</string>
     <string name="foreground_notif_ticker">Foreground</string>
     <string name="message_missing_nextcloud_app">Nextcloud Files is not installed on your device.\nPlease install it</string>

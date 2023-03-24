@@ -15,7 +15,7 @@ import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createStartErrorNotification
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showStartErrorNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
@@ -114,7 +114,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             Log.d(TAG, "SSE event 'start' never received")
             Log.d(TAG, "Stopping service")
             StartService.stopService()
-            createStartErrorNotification(context)
+            showStartErrorNotification(context)
             return false
         }
         return true
