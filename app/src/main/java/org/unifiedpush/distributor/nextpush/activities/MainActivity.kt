@@ -3,12 +3,16 @@ package org.unifiedpush.distributor.nextpush.activities
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isGone
+import com.google.android.material.card.MaterialCardView
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
@@ -27,7 +31,6 @@ import java.lang.String.format
 class MainActivity : AppCompatActivity() {
 
     private lateinit var listView: ListView
-    private var showLogout = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,9 +44,13 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.main_account_desc).text =
             format(getString(R.string.main_account_desc), getAccount(this)?.name)
-        showLogout = true
         invalidateOptionsMenu()
         RestartWorker.startPeriodic(this)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        showOptimisationWarning()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -73,6 +80,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showOptimisationWarning() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            findViewById<MaterialCardView>(R.id.card_battery_optimization).isGone = false
+            findViewById<Button>(R.id.button_disable_optimisation).setOnClickListener {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+        } else {
+            findViewById<MaterialCardView>(R.id.card_battery_optimization).isGone = true
+        }
+    }
     private fun restart() {
         Log.d(TAG, "Restarting the Listener")
         FailureHandler.clearFails()

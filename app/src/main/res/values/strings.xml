@@ -37,4 +37,6 @@
     <string name="login_hint_nextcloud_root_url">Nextcloud root url</string>
     <string name="login_button_sign_in">Sign in</string>
     <string name="login_show_password_img_description">Show password</string>
+    <string name="button_disable_optimisation">Disable optimisation</string>
+    <string name="card_disable_optimisation_description">To ensure the app functions properly, it is important to disable battery optimization. This will prevent the app from being put to sleep and causing delays in notifications.</string>
 </resources>
