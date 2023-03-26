@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import okhttp3.sse.EventSource
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.deleteWarningNotification
+import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showNoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showWarningNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
@@ -11,6 +12,8 @@ object FailureHandler {
 
     var nFails = 0
         private set
+
+    private var nFailsBeforePing = 0
 
     // This is the last eventSource opened
     private var eventSource: EventSource? = null
@@ -22,7 +25,11 @@ object FailureHandler {
         deleteWarningNotification(context)
     }
 
-    fun newFail(context: Context, eventSource: EventSource?) {
+    fun newPing() {
+        nFailsBeforePing = 0
+    }
+
+    fun newFail(context: Context, eventSource: EventSource?, started: Boolean, pinged: Boolean) {
         Log.d(TAG, "newFail/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
@@ -31,6 +38,12 @@ object FailureHandler {
             nFails++
             if (nFails == 2) {
                 showWarningNotification(context)
+            }
+            if (started && !pinged) {
+                nFailsBeforePing++
+                if (nFailsBeforePing == 3) {
+                    showNoPingNotification(context)
+                }
             }
             this.eventSource = null
         }

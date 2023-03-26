@@ -23,6 +23,9 @@ import java.util.Calendar
 
 class SSEListener(val context: Context) : EventSourceListener() {
 
+    private var pinged = false
+    private var started = false
+
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         StartService.wakeLock?.let {
@@ -43,7 +46,14 @@ class SSEListener(val context: Context) : EventSourceListener() {
         lastEventDate = Calendar.getInstance()
 
         when (type) {
-            "start" -> context.hasStartedOnce = true
+            "start" -> {
+                started = true
+                context.hasStartedOnce = true
+            }
+            "ping" -> {
+                pinged = true
+                FailureHandler.newPing()
+            }
             "keepalive" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
                 keepalive = message.keepalive
@@ -76,7 +86,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         Log.d(TAG, "onClosed: $eventSource")
         eventSource.cancel()
         if (!shouldRestart()) return
-        FailureHandler.newFail(context, eventSource)
+        FailureHandler.newFail(context, eventSource, started, pinged)
         RestartWorker.run(context, delay = 0)
     }
 
@@ -95,7 +105,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             FailureHandler.once(eventSource)
             return
         }
-        FailureHandler.newFail(context, eventSource)
+        FailureHandler.newFail(context, eventSource, started, pinged)
         val delay = when (FailureHandler.nFails) {
             1 -> 2 // 2sec
             2 -> 5 // 5sec

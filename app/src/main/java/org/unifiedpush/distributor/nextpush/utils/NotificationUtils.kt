@@ -33,8 +33,6 @@ private data class NotificationData(
 )
 object NotificationUtils {
 
-    private val Context.WARNING_CHANNEL_ID
-        get() = "${this.getString(R.string.app_name)}.Warning"
     private var warningShown = false
 
     private fun createNotificationChannel(context: Context, channelData: ChannelData) {
@@ -136,11 +134,8 @@ object NotificationUtils {
         )
     }
 
-    fun showWarningNotification(context: Context) {
-        if (warningShown) {
-            return
-        }
-        val notificationChannelId = context.WARNING_CHANNEL_ID
+    private fun createWarningNotificationChannel(context: Context): String {
+        val notificationChannelId = "${context.getString(R.string.app_name)}.Warning"
 
         createNotificationChannel(
             context,
@@ -151,6 +146,14 @@ object NotificationUtils {
                 context.getString(R.string.warning_notif_description)
             )
         )
+        return notificationChannelId
+    }
+
+    fun showWarningNotification(context: Context) {
+        if (warningShown) {
+            return
+        }
+        val notificationChannelId = createWarningNotificationChannel(context)
 
         val intent = createIntentToMain(context)
 
@@ -178,17 +181,7 @@ object NotificationUtils {
     }
 
     fun showStartErrorNotification(context: Context) {
-        val notificationChannelId = context.WARNING_CHANNEL_ID
-
-        createNotificationChannel(
-            context,
-            ChannelData(
-                notificationChannelId,
-                "Warning",
-                NotificationManager.IMPORTANCE_HIGH,
-                context.getString(R.string.warning_notif_description)
-            )
-        )
+        val notificationChannelId = createWarningNotificationChannel(context)
 
         val notification = createNotification(
             context,
@@ -207,22 +200,31 @@ object NotificationUtils {
     }
 
     fun showLowKeepaliveNotification(context: Context, keepalive: Int) {
-        val notificationChannelId = context.WARNING_CHANNEL_ID
-
-        createNotificationChannel(
-            context,
-            ChannelData(
-                notificationChannelId,
-                "Warning",
-                NotificationManager.IMPORTANCE_HIGH,
-                context.getString(R.string.warning_notif_description)
-            )
-        )
+        val notificationChannelId = createWarningNotificationChannel(context)
 
         val notification = createNotification(
             context,
             NotificationData(
                 context.getString(R.string.low_keepalive_notif_content).format(keepalive),
+                context.getString(R.string.warning_notif_ticker),
+                Notification.PRIORITY_HIGH,
+                false,
+                notificationChannelId
+            ),
+            null,
+            true
+        )
+
+        show(context, NOTIFICATION_ID_WARNING, notification)
+    }
+
+    fun showNoPingNotification(context: Context) {
+        val notificationChannelId = createWarningNotificationChannel(context)
+
+        val notification = createNotification(
+            context,
+            NotificationData(
+                context.getString(R.string.no_ping_notif_content),
                 context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
                 false,
