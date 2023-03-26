@@ -3,6 +3,7 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import okhttp3.sse.EventSource
+import org.unifiedpush.distributor.nextpush.api.SSEListener
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.deleteWarningNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showNoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showWarningNotification
@@ -29,7 +30,7 @@ object FailureHandler {
         nFailsBeforePing = 0
     }
 
-    fun newFail(context: Context, eventSource: EventSource?, started: Boolean, pinged: Boolean) {
+    fun newFail(context: Context, eventSource: EventSource?) {
         Log.d(TAG, "newFail/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
@@ -39,7 +40,8 @@ object FailureHandler {
             if (nFails == 2) {
                 showWarningNotification(context)
             }
-            if (started && !pinged) {
+            if (SSEListener.started && !SSEListener.pinged) {
+                Log.d(TAG, "The service has started and it has never received a ping.")
                 nFailsBeforePing++
                 if (nFailsBeforePing == 3) {
                     showNoPingNotification(context)
@@ -70,6 +72,7 @@ object FailureHandler {
 
     fun clearFails() {
         nFails = 0
+        nFailsBeforePing = 0
         eventSource = null
     }
 

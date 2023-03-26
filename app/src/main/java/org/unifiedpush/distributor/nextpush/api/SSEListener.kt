@@ -30,8 +30,6 @@ class SSEListener(val context: Context) : EventSourceListener() {
                 it.release()
             }
         }
-        started = false
-        pinged = false
         try {
             Log.d(TAG, "onOpen: " + response.code)
         } catch (e: Exception) {
@@ -85,7 +83,8 @@ class SSEListener(val context: Context) : EventSourceListener() {
         Log.d(TAG, "onClosed: $eventSource")
         eventSource.cancel()
         if (!shouldRestart()) return
-        FailureHandler.newFail(context, eventSource, started, pinged)
+        FailureHandler.newFail(context, eventSource)
+        clearVars()
         RestartWorker.run(context, delay = 0)
     }
 
@@ -102,9 +101,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
         if (!RestartNetworkCallback.hasInternet) {
             Log.d(TAG, "No Internet: do not restart")
             FailureHandler.once(eventSource)
+            clearVars()
             return
         }
-        FailureHandler.newFail(context, eventSource, started, pinged)
+        FailureHandler.newFail(context, eventSource)
+        clearVars()
         val delay = when (FailureHandler.nFails) {
             1 -> 2 // 2sec
             2 -> 5 // 5sec
@@ -131,6 +132,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
             return false
         }
         return true
+    }
+
+    private fun clearVars() {
+        started = false
+        pinged = false
     }
 
     companion object {
