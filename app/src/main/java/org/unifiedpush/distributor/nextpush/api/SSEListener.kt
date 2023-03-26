@@ -23,9 +23,6 @@ import java.util.Calendar
 
 class SSEListener(val context: Context) : EventSourceListener() {
 
-    private var pinged = false
-    private var started = false
-
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         StartService.wakeLock?.let {
@@ -33,6 +30,8 @@ class SSEListener(val context: Context) : EventSourceListener() {
                 it.release()
             }
         }
+        started = false
+        pinged = false
         try {
             Log.d(TAG, "onOpen: " + response.code)
         } catch (e: Exception) {
@@ -137,6 +136,10 @@ class SSEListener(val context: Context) : EventSourceListener() {
     companion object {
         var lastEventDate: Calendar? = null
         var keepalive = 900
+            private set
+        var pinged = false
+            private set
+        var started = false
             private set
     }
 }

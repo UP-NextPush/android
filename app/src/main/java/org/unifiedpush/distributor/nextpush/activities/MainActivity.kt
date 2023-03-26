@@ -10,8 +10,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
+import androidx.core.view.setPadding
 import com.google.android.material.card.MaterialCardView
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account
@@ -26,11 +28,14 @@ import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.utils.TAG
+import org.unifiedpush.distributor.nextpush.utils.getDebugInfo
 import java.lang.String.format
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var listView: ListView
+    private var lastClickTime = 0L
+    private var clickCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +51,7 @@ class MainActivity : AppCompatActivity() {
             format(getString(R.string.main_account_desc), getAccount(this)?.name)
         invalidateOptionsMenu()
         RestartWorker.startPeriodic(this)
+        setDebugInformationListener()
     }
 
     override fun onStart() {
@@ -160,6 +166,38 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         )
+    }
+
+    private fun setDebugInformationListener() {
+        findViewById<TextView>(R.id.main_account_title).setOnClickListener {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastClickTime < 500) {
+                clickCount++
+                if (clickCount == 5) {
+                    val scale = resources.displayMetrics.density
+                    val dpAsPixels = (16 * scale + 0.5f)
+                    val showText = TextView(this)
+                        .apply {
+                            setTextIsSelectable(true)
+                            text = getDebugInfo()
+                            setPadding(dpAsPixels.toInt())
+                        }
+                    AlertDialog.Builder(this)
+                        .setTitle("Debug information")
+                        .setView(showText)
+                        .setCancelable(false)
+                        .setPositiveButton("Ok") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .show()
+
+                    clickCount = 0 // Réinitialisez le compteur après l'affichage de la popup
+                }
+            } else {
+                clickCount = 1
+            }
+            lastClickTime = currentTime
+        }
     }
     companion object {
         fun goToMainActivity(context: Context) {

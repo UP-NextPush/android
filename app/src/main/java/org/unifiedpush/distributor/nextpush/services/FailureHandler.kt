@@ -77,4 +77,10 @@ object FailureHandler {
         // nFails > 0 to be sure it is not actually restarting
         return if (orNeverStart) { eventSource == null } else { false } || nFails > 0
     }
+
+    fun getDebugInfo(): String {
+        return "nFails: $nFails\n" +
+            "nFailsBeforePing: $nFailsBeforePing\n" +
+            "eventSource null: ${eventSource == null}"
+    }
 }
