@@ -16,6 +16,9 @@ import org.unifiedpush.distributor.nextpush.activities.MainActivity
 
 const val NOTIFICATION_ID_FOREGROUND = 51115
 const val NOTIFICATION_ID_WARNING = 51215
+const val NOTIFICATION_ID_NO_START = 51315
+const val NOTIFICATION_ID_LOW_KEEPALIVE = 51315
+const val NOTIFICATION_ID_NO_PING = 51515
 
 private data class ChannelData(
     val id: String,
@@ -196,7 +199,7 @@ object NotificationUtils {
             true
         )
 
-        show(context, NOTIFICATION_ID_WARNING, notification)
+        show(context, NOTIFICATION_ID_NO_START, notification)
     }
 
     fun showLowKeepaliveNotification(context: Context, keepalive: Int) {
@@ -215,7 +218,7 @@ object NotificationUtils {
             true
         )
 
-        show(context, NOTIFICATION_ID_WARNING, notification)
+        show(context, NOTIFICATION_ID_LOW_KEEPALIVE, notification)
     }
 
     fun showNoPingNotification(context: Context) {
@@ -234,6 +237,6 @@ object NotificationUtils {
             true
         )
 
-        show(context, NOTIFICATION_ID_WARNING, notification)
+        show(context, NOTIFICATION_ID_NO_PING, notification)
     }
 }
