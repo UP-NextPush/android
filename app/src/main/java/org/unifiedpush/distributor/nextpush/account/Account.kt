@@ -9,7 +9,6 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 internal const val PREF_NAME = "NextPush"
 private const val PREF_DEVICE_ID = "deviceId"
 private const val PREF_ACCOUNT_TYPE = "account::type"
-private const val PREF_HAS_STARTED_ONCE = "account::has_started_once"
 
 enum class AccountType {
     SSO,
@@ -48,12 +47,6 @@ object Account {
                 }.apply()
         }
 
-    var Context.hasStartedOnce: Boolean
-        get() = this.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .getBoolean(PREF_HAS_STARTED_ONCE, false)
-        set(value) = this.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .edit().putBoolean(PREF_HAS_STARTED_ONCE, value).apply()
-
     fun getAccount(context: Context, uninitialized: Boolean = false): AccountFactory? {
         return account
             ?: run {
@@ -89,7 +82,6 @@ object Account {
     fun logout(context: Context) {
         getAccount(context)?.logout(context)
         context.deviceId = null
-        context.hasStartedOnce = false
     }
 
     fun Context.setTypeSSO() {

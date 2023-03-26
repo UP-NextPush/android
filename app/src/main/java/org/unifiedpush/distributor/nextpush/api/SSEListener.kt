@@ -7,7 +7,6 @@ import com.google.gson.Gson
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
-import org.unifiedpush.distributor.nextpush.account.Account.hasStartedOnce
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
@@ -20,11 +19,15 @@ import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showStartErr
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.concurrent.schedule
 
 class SSEListener(val context: Context) : EventSourceListener() {
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
+        startingTimer?.cancel()
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -43,10 +46,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         lastEventDate = Calendar.getInstance()
 
         when (type) {
-            "start" -> {
-                started = true
-                context.hasStartedOnce = true
-            }
+            "start" -> started = true
             "ping" -> {
                 pinged = true
                 FailureHandler.newPing()
@@ -122,19 +122,14 @@ class SSEListener(val context: Context) : EventSourceListener() {
     private fun shouldRestart(): Boolean {
         if (!StartService.isServiceStarted) {
             Log.d(TAG, "StartService not started")
-            return false
-        }
-        if (!context.hasStartedOnce) {
-            Log.d(TAG, "SSE event 'start' never received")
-            Log.d(TAG, "Stopping service")
-            StartService.stopService()
-            showStartErrorNotification(context)
+            clearVars()
             return false
         }
         return true
     }
 
     private fun clearVars() {
+        startingTimer?.cancel()
         started = false
         pinged = false
     }
@@ -143,9 +138,21 @@ class SSEListener(val context: Context) : EventSourceListener() {
         var lastEventDate: Calendar? = null
         var keepalive = 900
             private set
+        private var startingTimer: TimerTask? = null
         var pinged = false
             private set
         var started = false
             private set
+
+        fun starting(context: Context) {
+            // The request timeout after 10seconds
+            // If it doesn't, and onOpen hasn't been called, then
+            // the response is very probably buffered.
+            // +20secs for a margin
+            startingTimer = Timer().schedule(30_000L /* 30secs */) {
+                StartService.stopService()
+                showStartErrorNotification(context)
+            }
+        }
     }
 }
