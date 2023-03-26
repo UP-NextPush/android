@@ -1,0 +1,3 @@
+- Improve feedback to the user
+- Some optimizations
+- Minor corrections
