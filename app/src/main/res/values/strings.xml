@@ -20,7 +20,7 @@
     <string name="warning_notif_ticker">Warning</string>
     <string name="start_error_notif_content">The service could not be started correctly. Check the configuration of your server. You may be using a reverse proxy with buffering enabled.</string>
     <string name="low_keepalive_notif_content">The server app is configured with a low keepalive: %ss. It will drain your battery. We recommend using a higher keepalive.</string>
-    <string name="no_ping_notif_content">NextPush was disconnected 3 times before receiving the ping. You probably have a problem with your server configuration. Your reverse proxy timeout is probably too low.</string>
+    <string name="no_ping_notif_content">NextPush was disconnected 5 times before receiving the ping. You probably have a problem with your server configuration. Your reverse proxy timeout is probably too low.</string>
     <string name="foreground_notif_ticker">Foreground</string>
     <string name="message_missing_nextcloud_app">Nextcloud Files is not installed on your device.\nPlease install it</string>
     <string name="uri_market_nextcloud_app">market://details?id=com.nextcloud.client</string>

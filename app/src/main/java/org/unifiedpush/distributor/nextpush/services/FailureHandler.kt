@@ -43,7 +43,7 @@ object FailureHandler {
             if (SSEListener.started && !SSEListener.pinged) {
                 Log.d(TAG, "The service has started and it has never received a ping.")
                 nFailsBeforePing++
-                if (nFailsBeforePing == 3) {
+                if (nFailsBeforePing == 5) {
                     showNoPingNotification(context)
                 }
             }
