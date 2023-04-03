@@ -27,7 +27,10 @@ class SSEListener(val context: Context) : EventSourceListener() {
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
-        startingTimer?.cancel()
+        startingTimer = Timer().schedule(30_000L /* 30secs */) {
+            StartService.stopService()
+            showStartErrorNotification(context)
+        }
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -46,7 +49,10 @@ class SSEListener(val context: Context) : EventSourceListener() {
         lastEventDate = Calendar.getInstance()
 
         when (type) {
-            "start" -> started = true
+            "start" -> {
+                started = true
+                startingTimer?.cancel()
+            }
             "ping" -> {
                 pinged = true
                 FailureHandler.newPing()
@@ -143,16 +149,5 @@ class SSEListener(val context: Context) : EventSourceListener() {
             private set
         var started = false
             private set
-
-        fun starting(context: Context) {
-            // The request timeout after 10seconds
-            // If it doesn't, and onOpen hasn't been called, then
-            // the response is very probably buffered.
-            // +20secs for a margin
-            startingTimer = Timer().schedule(30_000L /* 30secs */) {
-                StartService.stopService()
-                showStartErrorNotification(context)
-            }
-        }
     }
 }
