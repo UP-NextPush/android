@@ -28,7 +28,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         startingTimer?.cancel()
-        startingTimer = Timer().schedule(30_000L /* 30secs */) {
+        startingTimer = Timer().schedule(45_000L /* 45secs */) {
             StartService.stopService()
             showStartErrorNotification(context)
         }
