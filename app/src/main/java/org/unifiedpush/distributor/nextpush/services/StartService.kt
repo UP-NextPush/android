@@ -85,6 +85,7 @@ class StartService : Service() {
             private set
         var wakeLock: PowerManager.WakeLock? = null
             private set
+        var bufferedResponseChecked = false
 
         fun startListener(context: Context) {
             if (isServiceStarted && !FailureHandler.hasFailed()) return
@@ -102,6 +103,7 @@ class StartService : Service() {
         fun stopService(block: () -> Unit = {}) {
             Log.d(TAG, "Stopping Service")
             isServiceStarted = false
+            bufferedResponseChecked = false
             lastEventDate = null
             service?.stopSelf()
             block()

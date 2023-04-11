@@ -14,6 +14,7 @@ import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
+import org.unifiedpush.distributor.nextpush.services.StartService.StartServiceCompanion.bufferedResponseChecked
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showLowKeepaliveNotification
 import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showStartErrorNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
@@ -28,9 +29,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         startingTimer?.cancel()
-        startingTimer = Timer().schedule(45_000L /* 45secs */) {
-            StartService.stopService()
-            showStartErrorNotification(context)
+        if (!bufferedResponseChecked) {
+            startingTimer = Timer().schedule(45_000L /* 45secs */) {
+                StartService.stopService()
+                showStartErrorNotification(context)
+            }
         }
         StartService.wakeLock?.let {
             while (it.isHeld) {
@@ -53,6 +56,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             "start" -> {
                 started = true
                 startingTimer?.cancel()
+                bufferedResponseChecked = true
             }
             "ping" -> {
                 pinged = true
