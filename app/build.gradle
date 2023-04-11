@@ -11,8 +11,8 @@ android {
         applicationId "org.unifiedpush.distributor.nextpush"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 23
-        versionName "1.6.2"
+        versionCode 24
+        versionName "1.6.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
