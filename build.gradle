@@ -28,7 +28,6 @@ allprojects {
             url "https://www.jitpack.io"
             content {
                 includeModule 'com.github.nextcloud', 'Android-SingleSignOn'
-                includeModule 'com.github.p1gp1g', 'Android-SingleSignOn'
             }
         }
     }
