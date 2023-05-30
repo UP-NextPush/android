@@ -18,6 +18,10 @@ object FailureHandler {
 
     // This is the last eventSource opened
     private var eventSource: EventSource? = null
+        set(value) {
+            field?.cancel()
+            field = value
+        }
 
     fun newEventSource(context: Context, eventSource: EventSource) {
         Log.d(TAG, "newEvent/Eventsource: $eventSource")
@@ -48,6 +52,8 @@ object FailureHandler {
                 }
             }
             this.eventSource = null
+        } else {
+            eventSource?.cancel()
         }
     }
 
@@ -59,6 +65,8 @@ object FailureHandler {
             Log.d(TAG, "EventSource is known or null")
             nFails = 1
             this.eventSource = null
+        } else {
+            eventSource?.cancel()
         }
     }
 
