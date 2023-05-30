@@ -11,8 +11,15 @@ import org.unifiedpush.distributor.nextpush.utils.TAG
 
 object FailureHandler {
 
+    private var ttlFails = 0
+
     var nFails = 0
-        private set
+        private set(value) {
+            if (value > 0) {
+                ttlFails += 1
+            }
+            field = value
+        }
 
     private var nFailsBeforePing = 0
 
@@ -79,6 +86,7 @@ object FailureHandler {
     }
 
     fun clearFails() {
+        ttlFails = 0
         nFails = 0
         nFailsBeforePing = 0
         eventSource = null
@@ -90,7 +98,8 @@ object FailureHandler {
     }
 
     fun getDebugInfo(): String {
-        return "nFails: $nFails\n" +
+        return "ttlFails: $ttlFails\n" +
+            "nFails: $nFails\n" +
             "nFailsBeforePing: $nFailsBeforePing\n" +
             "eventSource null: ${eventSource == null}"
     }
