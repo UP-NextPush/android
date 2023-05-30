@@ -10,6 +10,7 @@ import okhttp3.sse.EventSourceListener
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
+import org.unifiedpush.distributor.nextpush.receivers.StartReceiver
 import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
@@ -30,9 +31,13 @@ class SSEListener(val context: Context) : EventSourceListener() {
         FailureHandler.newEventSource(context, eventSource)
         startingTimer?.cancel()
         if (!bufferedResponseChecked) {
-            startingTimer = Timer().schedule(45_000L /* 45secs */) {
-                StartService.stopService()
-                showStartErrorNotification(context)
+            if (StartReceiver.booting) {
+                StartReceiver.booting = false
+            } else {
+                startingTimer = Timer().schedule(45_000L /* 45secs */) {
+                    StartService.stopService()
+                    showStartErrorNotification(context)
+                }
             }
         }
         StartService.wakeLock?.let {
