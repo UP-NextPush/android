@@ -6,15 +6,17 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.* // ktlint-disable no-wildcard-imports
-import androidx.appcompat.app.AlertDialog
+import android.widget.AbsListView.MultiChoiceModeListener
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.util.size
 import androidx.core.view.isGone
 import androidx.core.view.setPadding
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
@@ -34,6 +36,9 @@ import java.lang.String.format
 class MainActivity : AppCompatActivity() {
 
     private lateinit var listView: ListView
+
+    // if the unregister dialog is shown, we prevent the list to be reset
+    private var preventListReset = false
     private var lastClickTime = 0L
     private var clickCount = 0
 
@@ -62,7 +67,11 @@ class MainActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            setListView()
+            if (preventListReset) {
+                preventListReset = false
+            } else {
+                setListView()
+            }
         }
     }
 
@@ -128,44 +137,91 @@ class MainActivity : AppCompatActivity() {
     private fun setListView() {
         listView = findViewById(R.id.applications_list)
 
-        val tokenList = emptyList<String>().toMutableList()
-        val appList = emptyList<String>().toMutableList()
+        val appList = emptyList<App>().toMutableList()
 
         getDb(this).let { db ->
             db.listTokens().forEach {
-                tokenList.add(it)
-                appList.add(db.getPackageName(it) ?: it)
+                appList.add(
+                    App(token = it, packageId = db.getPackageName(it) ?: it)
+                )
             }
         }
 
-        listView.adapter = ArrayAdapter(
+        val editListAdapter = AppListAdapter(
             this,
-            android.R.layout.simple_list_item_1,
+            R.layout.item_app,
             appList
         )
 
-        listView.setOnItemLongClickListener(
-            fun(_: AdapterView<*>, _: View, position: Int, _: Long): Boolean {
-                val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
-                    this
-                )
-                alert.setTitle("Unregistering")
-                alert.setMessage("Are you sure to unregister ${appList[position]} ?")
-                alert.setPositiveButton("YES") { dialog, _ ->
-                    val connectorToken = tokenList[position]
-                    deleteApp(this, connectorToken) {
-                        Log.d(TAG, "Unregistration is finished")
-                        this@MainActivity.runOnUiThread {
-                            setListView()
-                        }
-                    }
-                    dialog.dismiss()
-                }
-                alert.setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
-                alert.show()
+        listView.adapter = editListAdapter
+        listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE_MODAL
+
+        listView.setMultiChoiceModeListener(object : MultiChoiceModeListener {
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                return false
+            }
+
+            override fun onDestroyActionMode(mode: ActionMode?) {
+                editListAdapter.removeSelection()
+            }
+
+            override fun onItemCheckedStateChanged(
+                mode: ActionMode,
+                position: Int,
+                id: Long,
+                checked: Boolean
+            ) {
+                val checkedCount = listView.checkedItemCount
+                mode.title = "$checkedCount selected"
+                editListAdapter.toggleSelection(position)
+            }
+
+            override fun onCreateActionMode(mode: ActionMode, menu: Menu?): Boolean {
+                mode.menuInflater.inflate(R.menu.menu_delete, menu)
                 return true
             }
-        )
+
+            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+                Log.d(TAG, "Action clicked")
+                return when (item.itemId) {
+                    R.id.action_delete -> {
+                        Log.d(TAG, "deleting")
+                        val selected = editListAdapter.getSelectedIds()
+                        val alert = MaterialAlertDialogBuilder(this@MainActivity)
+                        alert.setTitle(getString(R.string.dialog_unregistering_title))
+                        alert.setMessage(getString(R.string.dialog_unregistering_content).format(selected.size))
+                        alert.setPositiveButton(getString(R.string.dialog_yes)) { dialog, _ ->
+                            var i = selected.size - 1
+                            while (i >= 0) {
+                                if (selected.valueAt(i)) {
+                                    editListAdapter.getItem(selected.keyAt(i))?.let {
+                                        deleteApp(this@MainActivity, it.token) {
+                                            Log.d(TAG, "${it.packageId} unregistered")
+                                            editListAdapter.remove(it)
+                                            this@MainActivity.runOnUiThread {
+                                                setListView()
+                                            }
+                                        }
+                                    }
+                                    i--
+                                }
+                            }
+                            preventListReset = false
+                            dialog.dismiss()
+                            mode.finish()
+                        }
+                        alert.setNegativeButton(getString(R.string.dialog_no)) { dialog, _ -> dialog.dismiss() }
+                        alert.setOnCancelListener {
+                            Log.d(TAG, "Cancelled")
+                        }
+                        preventListReset = true
+                        alert.show()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        })
     }
 
     private fun setDebugInformationListener() {
@@ -182,7 +238,7 @@ class MainActivity : AppCompatActivity() {
                             text = getDebugInfo()
                             setPadding(dpAsPixels.toInt())
                         }
-                    AlertDialog.Builder(this)
+                    MaterialAlertDialogBuilder(this)
                         .setTitle("Debug information")
                         .setView(showText)
                         .setCancelable(false)
@@ -191,7 +247,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         .show()
 
-                    clickCount = 0 // Réinitialisez le compteur après l'affichage de la popup
+                    clickCount = 0 // Reset count after showing the dialog
                 }
             } else {
                 clickCount = 1
