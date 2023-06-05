@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/action_copy_endpoint"
+        android:icon="@drawable/ic_content_copy_24"
+        android:title="@string/copy_endpoint"
+        android:iconTint="@color/white" />
+    <item
         android:id="@+id/action_delete"
         android:icon="@drawable/ic_delete_24"
         android:title="@string/action_delete"

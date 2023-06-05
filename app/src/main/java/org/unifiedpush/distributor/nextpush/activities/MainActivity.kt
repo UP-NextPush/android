@@ -1,31 +1,39 @@
 package org.unifiedpush.distributor.nextpush.activities
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.Html
+import android.text.InputType
 import android.util.Log
+import android.util.TypedValue
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.* // ktlint-disable no-wildcard-imports
 import android.widget.AbsListView.MultiChoiceModeListener
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.size
 import androidx.core.view.isGone
 import androidx.core.view.setPadding
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.unifiedpush.distributor.nextpush.Database.Companion.getDb
+import org.unifiedpush.distributor.nextpush.LocalNotification
 import org.unifiedpush.distributor.nextpush.R
 import org.unifiedpush.distributor.nextpush.account.Account
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.activities.PermissionsRequest.requestAppPermissions
 import org.unifiedpush.distributor.nextpush.activities.StartActivity.Companion.goToStartActivity
+import org.unifiedpush.distributor.nextpush.distributor.Distributor
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteDevice
-import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
 import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
@@ -90,6 +98,10 @@ class MainActivity : AppCompatActivity() {
                 logout()
                 return true
             }
+            R.id.action_add_local_channel -> {
+                addChannel()
+                return true
+            }
 
             else -> super.onOptionsItemSelected(item)
         }
@@ -115,7 +127,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun logout() {
-        val alert: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
+        val alert = AlertDialog.Builder(
             this
         )
         alert.setTitle(getString(R.string.logout_alert_title))
@@ -132,6 +144,50 @@ class MainActivity : AppCompatActivity() {
         }
         alert.setNegativeButton(getString(R.string.discard)) { dialog, _ -> dialog.dismiss() }
         alert.show()
+    }
+
+    private fun addChannel() {
+        val builder = AlertDialog.Builder(
+            this
+        )
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_TEXT
+        input.hint = "My Title"
+        val pad32 = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_PX,
+            32F,
+            resources.displayMetrics
+        ).toInt()
+        input.setPadding(pad32)
+        builder.setView(input)
+        builder.setTitle("Notification Channel")
+        builder.setMessage(Html.fromHtml(getString(R.string.add_channel_dialog_content), Html.FROM_HTML_MODE_LEGACY))
+        builder.setPositiveButton(R.string.ok) { dialog, _ ->
+            dialog.dismiss()
+            Log.d(TAG, "title: ${input.text}")
+            LocalNotification.createChannel(
+                this,
+                input.text.toString()
+            ) {
+                setListView()
+            }
+        }
+        builder.setNegativeButton(getString(R.string.discard)) { dialog, _ -> dialog.dismiss() }
+        builder.show()
+    }
+
+    private fun shouldShowCopyItem(listView: ListView, appListAdapter: AppListAdapter): Boolean {
+        if (listView.checkedItemCount == 1) {
+            val selected = appListAdapter.getSelectedIds()
+            var i = selected.size - 1
+            while (i >= 0) {
+                if (selected.valueAt(i)) {
+                    return appListAdapter.getItem(selected.keyAt(i))?.packageId == packageName
+                }
+                i--
+            }
+        }
+        return false
     }
 
     private fun setListView() {
@@ -156,6 +212,8 @@ class MainActivity : AppCompatActivity() {
         listView.adapter = editListAdapter
         listView.choiceMode = ListView.CHOICE_MODE_MULTIPLE_MODAL
 
+        var copyEndpointItem: MenuItem? = null
+
         listView.setMultiChoiceModeListener(object : MultiChoiceModeListener {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 return false
@@ -174,10 +232,12 @@ class MainActivity : AppCompatActivity() {
                 val checkedCount = listView.checkedItemCount
                 mode.title = "$checkedCount selected"
                 editListAdapter.toggleSelection(position)
+                copyEndpointItem?.isVisible = shouldShowCopyItem(listView, editListAdapter)
             }
 
             override fun onCreateActionMode(mode: ActionMode, menu: Menu?): Boolean {
                 mode.menuInflater.inflate(R.menu.menu_delete, menu)
+                copyEndpointItem = menu?.findItem(R.id.action_copy_endpoint)
                 return true
             }
 
@@ -216,6 +276,21 @@ class MainActivity : AppCompatActivity() {
                         }
                         preventListReset = true
                         alert.show()
+                        true
+                    }
+                    R.id.action_copy_endpoint -> {
+                        Log.d(TAG, "Copying endpoint")
+                        val selected = editListAdapter.getSelectedIds()
+                        if (selected.size > 1) {
+                            Log.e(TAG, "Copying endpoint for more than an app")
+                            return true
+                        }
+                        editListAdapter.getItem(selected.keyAt(0))?.let {
+                            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip: ClipData = ClipData.newPlainText("simple text", Distributor.getEndpoint(this@MainActivity, it.token))
+                            clipboard.setPrimaryClip(clip)
+                            mode.finish()
+                        }
                         true
                     }
                     else -> false

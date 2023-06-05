@@ -19,6 +19,7 @@ const val NOTIFICATION_ID_WARNING = 51215
 const val NOTIFICATION_ID_NO_START = 51315
 const val NOTIFICATION_ID_LOW_KEEPALIVE = 51315
 const val NOTIFICATION_ID_NO_PING = 51515
+const val NOTIFICATION_ID_FROM_PUSH = 51615
 
 private data class ChannelData(
     val id: String,
@@ -28,6 +29,7 @@ private data class ChannelData(
 )
 
 private data class NotificationData(
+    val title: String,
     val text: String,
     val ticker: String,
     val priority: Int,
@@ -66,7 +68,7 @@ object NotificationUtils {
             }
 
         return builder
-            .setContentTitle(context.getString(R.string.app_name))
+            .setContentTitle(notificationData.title)
             .setContentText(notificationData.text)
             .setSmallIcon(R.drawable.ic_logo)
             .setTicker(notificationData.ticker)
@@ -127,6 +129,7 @@ object NotificationUtils {
         return createNotification(
             context,
             NotificationData(
+                context.getString(R.string.app_name),
                 context.getString(R.string.foreground_notif_description),
                 context.getString(R.string.foreground_notif_ticker),
                 Notification.PRIORITY_LOW,
@@ -163,6 +166,7 @@ object NotificationUtils {
         val notification = createNotification(
             context,
             NotificationData(
+                context.getString(R.string.app_name),
                 context.getString(R.string.warning_notif_content),
                 context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
@@ -189,6 +193,7 @@ object NotificationUtils {
         val notification = createNotification(
             context,
             NotificationData(
+                context.getString(R.string.app_name),
                 context.getString(R.string.start_error_notif_content),
                 context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
@@ -208,6 +213,7 @@ object NotificationUtils {
         val notification = createNotification(
             context,
             NotificationData(
+                context.getString(R.string.app_name),
                 context.getString(R.string.low_keepalive_notif_content).format(keepalive),
                 context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
@@ -227,6 +233,7 @@ object NotificationUtils {
         val notification = createNotification(
             context,
             NotificationData(
+                context.getString(R.string.app_name),
                 context.getString(R.string.no_ping_notif_content),
                 context.getString(R.string.warning_notif_ticker),
                 Notification.PRIORITY_HIGH,
@@ -238,5 +245,33 @@ object NotificationUtils {
         )
 
         show(context, NOTIFICATION_ID_NO_PING, notification)
+    }
+
+    fun showNotificationFromPush(context: Context, title: String, content: String) {
+        val notificationChannelId = "${context.getString(R.string.app_name)}.PushNotification"
+
+        createNotificationChannel(
+            context,
+            ChannelData(
+                notificationChannelId,
+                "Push notifications",
+                NotificationManager.IMPORTANCE_HIGH,
+                context.getString(R.string.local_notif_description)
+            )
+        )
+
+        val notification = createNotification(
+            context,
+            NotificationData(
+                title,
+                content,
+                title,
+                Notification.PRIORITY_HIGH,
+                false,
+                notificationChannelId
+            ),
+            null
+        )
+        show(context, NOTIFICATION_ID_FROM_PUSH, notification)
     }
 }

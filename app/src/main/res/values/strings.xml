@@ -44,4 +44,8 @@
     <string name="dialog_no">NO</string>
     <string name="dialog_unregistering_title">Unregistering</string>
     <string name="dialog_unregistering_content">Are you sure to unregister %d app(s)?</string>
+    <string name="add_channel_dialog_content"><![CDATA[This creates an endpoint to which you can push to be notified on your phone. For example, it can be used to find out when a script fails. This is not related to UnifiedPush.<br><br>Long press on the channel to copy the endpoint<br><br><h3>Title:</h3>]]></string>
+    <string name="local_notif_title">(Notif) %s</string>
+    <string name="local_notif_description">Push to be notified. Not related to UnifiedPush: messages aren\'t forwarded to any other app.</string>
+    <string name="copy_endpoint">Copy Endpoint</string>
 </resources>

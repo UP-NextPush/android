@@ -91,7 +91,7 @@ class Api(val context: Context) {
             .get()
             .build()
 
-        syncSource = EventSources.createFactory(client).newEventSource(request, SSEListener(context))
+        syncSource = EventSources.createFactory(client).newEventSource(request, SSEListener(context.applicationContext))
         Log.d(TAG, "cSync done.")
     }
 

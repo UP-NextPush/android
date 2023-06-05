@@ -9,7 +9,12 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/action_logout"
-        android:orderInCategory="100"
+        android:orderInCategory="105"
         android:title="@string/action_logout"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_add_local_channel"
+        android:orderInCategory="110"
+        android:title="Add notification channel"
         app:showAsAction="never" />
 </menu>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
+import org.unifiedpush.distributor.nextpush.Database.Companion.getDb
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.distributor.* // ktlint-disable no-wildcard-imports
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_NEW
@@ -13,7 +14,6 @@ import org.unifiedpush.distributor.nextpush.distributor.Distributor.TOKEN_REGIST
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.checkToken
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.createApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
-import org.unifiedpush.distributor.nextpush.distributor.Distributor.getDb
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendEndpoint
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendRegistrationFailed
 import org.unifiedpush.distributor.nextpush.utils.TAG

@@ -3,6 +3,8 @@ package org.unifiedpush.distributor.nextpush.distributor
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import org.unifiedpush.distributor.nextpush.Database.Companion.getDb
+import org.unifiedpush.distributor.nextpush.LocalNotification
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.Api
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
@@ -18,28 +20,23 @@ object Distributor {
     const val TOKEN_REGISTERED_OK = "token_registered_ok"
     const val TOKEN_NOK = "token_nok"
 
-    private lateinit var db: ConnectionsDatabase
-
-    fun getDb(context: Context): ConnectionsDatabase {
-        if (!this::db.isInitialized) {
-            db = ConnectionsDatabase(context)
-        }
-        return db
-    }
-
     fun sendMessage(context: Context, appToken: String, message: ByteArray) {
         val db = getDb(context)
         val connectorToken = db.getConnectorToken(appToken) ?: return
         val application = getApp(context, connectorToken)
-
-        val broadcastIntent = Intent()
-        broadcastIntent.`package` = application
-        broadcastIntent.action = ACTION_MESSAGE
-        broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
-        broadcastIntent.putExtra(EXTRA_MESSAGE, String(message))
-        broadcastIntent.putExtra(EXTRA_BYTES_MESSAGE, message)
-        context.sendBroadcast(broadcastIntent)
-        Log.d(TAG, "Message forwarded")
+        if (application == context.packageName) {
+            LocalNotification.showNotification(context, connectorToken, String(message))
+            Log.d(TAG, "Local notif shown")
+        } else {
+            val broadcastIntent = Intent()
+            broadcastIntent.`package` = application
+            broadcastIntent.action = ACTION_MESSAGE
+            broadcastIntent.putExtra(EXTRA_TOKEN, connectorToken)
+            broadcastIntent.putExtra(EXTRA_MESSAGE, String(message))
+            broadcastIntent.putExtra(EXTRA_BYTES_MESSAGE, message)
+            context.sendBroadcast(broadcastIntent)
+            Log.d(TAG, "Message forwarded")
+        }
     }
 
     fun sendEndpoint(context: Context, connectorToken: String) {
@@ -90,7 +87,7 @@ object Distributor {
         return app
     }
 
-    private fun getEndpoint(context: Context, connectorToken: String): String {
+    fun getEndpoint(context: Context, connectorToken: String): String {
         val db = getDb(context)
         val appToken = db.getAppToken(connectorToken)
         return "${getAccount(context)?.url}$mApiEndpoint/push/$appToken"
