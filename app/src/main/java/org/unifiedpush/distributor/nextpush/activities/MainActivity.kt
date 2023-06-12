@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
         } else {
-            findViewById<MaterialCardView>(R.id.card_battery_optimization).isGone = true
+            findViewById<MaterialCardView>(R.id.card_battery_optimization)?.isGone = true
         }
     }
     private fun restart() {
