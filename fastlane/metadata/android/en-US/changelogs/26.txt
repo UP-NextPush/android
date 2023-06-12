@@ -1,0 +1,3 @@
+- Minify the build
+- Update dependencies
+- Fix potential UI crashes
