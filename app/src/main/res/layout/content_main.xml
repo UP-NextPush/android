@@ -1,57 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_battery_optimization"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:checkable="true"
         android:clickable="true"
         android:focusable="true"
-        android:checkable="true"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
         android:padding="16dp"
-        android:layout_margin="16dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:visibility="gone" >
+        tools:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <LinearLayout
-                android:layout_width="match_parent"
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingTop="16dp"
                 android:paddingHorizontal="16dp"
-                android:paddingBottom="0dp" >
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp"
+                android:text="@string/card_disable_optimisation_description" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/card_disable_optimisation_description" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_disable_optimisation"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:text="@string/button_disable_optimisation" />
 
-                android:orientation="horizontal">
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/button_disable_optimisation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="@string/button_disable_optimisation"
-                    style="?attr/borderlessButtonStyle" />
-
-            </LinearLayout>
         </LinearLayout>
+
     </com.google.android.material.card.MaterialCardView>
 
     <TextView
@@ -75,10 +66,9 @@
         android:layout_marginEnd="16dp"
         android:text="@string/main_account_desc"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/main_account_title" />
-
 
     <TextView
         android:id="@+id/main_applications_title"
@@ -100,4 +90,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/main_applications_title" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
