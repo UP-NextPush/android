@@ -52,7 +52,7 @@ class Api(val context: Context) {
                         apiProvider.createDevice(parameters)
                             ?.subscribeOn(Schedulers.io())
                             ?.observeOn(AndroidSchedulers.mainThread())
-                            ?.subscribe(object : DisposableObserver<ApiResponse?>() {
+                            ?.subscribe(object : DisposableObserver<ApiResponse>() {
                                 override fun onNext(response: ApiResponse) {
                                     response.deviceId.let {
                                         context.deviceId = it
@@ -102,7 +102,7 @@ class Api(val context: Context) {
                 apiProvider.deleteDevice(deviceId)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
-                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
+                    ?.subscribe(object : DisposableObserver<ApiResponse>() {
                         override fun onNext(response: ApiResponse) {
                             if (response.success) {
                                 Log.d(TAG, "Device successfully deleted.")
@@ -145,7 +145,7 @@ class Api(val context: Context) {
                 apiProvider.createApp(parameters)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
-                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
+                    ?.subscribe(object : DisposableObserver<ApiResponse>() {
                         override fun onNext(response: ApiResponse) {
                             val nextpushToken = if (response.success) {
                                 Log.d(TAG, "App successfully created.")
@@ -179,7 +179,7 @@ class Api(val context: Context) {
                 apiProvider.deleteApp(nextpushToken)
                     ?.subscribeOn(Schedulers.io())
                     ?.observeOn(AndroidSchedulers.mainThread())
-                    ?.subscribe(object : DisposableObserver<ApiResponse?>() {
+                    ?.subscribe(object : DisposableObserver<ApiResponse>() {
                         override fun onNext(response: ApiResponse) {
                             if (response.success) {
                                 Log.d(TAG, "App successfully deleted.")
