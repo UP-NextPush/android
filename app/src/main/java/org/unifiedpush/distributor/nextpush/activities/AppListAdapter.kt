@@ -1,9 +1,6 @@
 package org.unifiedpush.distributor.nextpush.activities
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
-import android.util.Log
 import android.util.SparseBooleanArray
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +11,7 @@ import androidx.core.view.isGone
 import com.google.android.material.color.MaterialColors
 import org.unifiedpush.distributor.nextpush.Database.Companion.getDb
 import org.unifiedpush.distributor.nextpush.R
-import org.unifiedpush.distributor.nextpush.utils.TAG
+import org.unifiedpush.distributor.nextpush.utils.getApplicationName
 
 data class App(
     val token: String,
@@ -63,21 +60,10 @@ class AppListAdapter(context: Context, private val resource: Int, apps: List<App
     }
 
     private fun setViewHolderForUnifiedPushApp(viewHolder: ViewHolder?, app: App) {
-        try {
-            val ai = if (Build.VERSION.SDK_INT >= 33) {
-                context.packageManager.getApplicationInfo(
-                    app.packageId,
-                    PackageManager.ApplicationInfoFlags.of(
-                        PackageManager.GET_META_DATA.toLong()
-                    )
-                )
-            } else {
-                context.packageManager.getApplicationInfo(app.packageId, 0)
-            }
-            viewHolder?.name?.text = context.packageManager.getApplicationLabel(ai)
+        context.getApplicationName(app.packageId)?.let {
+            viewHolder?.name?.text = it
             viewHolder?.description?.text = app.packageId
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.e(TAG, "Could not resolve app name", e)
+        } ?: run {
             viewHolder?.name?.text = app.packageId
             viewHolder?.description?.isGone = true
         }
