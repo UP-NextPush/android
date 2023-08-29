@@ -32,7 +32,8 @@ private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
 
 class RegisterBroadcastReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context, intent: Intent?) {
+    override fun onReceive(rContext: Context, intent: Intent?) {
+        val context = rContext.applicationContext
         wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
@@ -48,17 +49,17 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     Log.w(TAG, "Trying to register an app without packageName")
                     return
                 }
-                when (checkToken(context.applicationContext, connectorToken, application)) {
-                    TOKEN_REGISTERED_OK -> sendEndpoint(context.applicationContext, connectorToken)
+                when (checkToken(context, connectorToken, application)) {
+                    TOKEN_REGISTERED_OK -> sendEndpoint(context, connectorToken)
                     TOKEN_NOK -> sendRegistrationFailed(
-                        context.applicationContext,
+                        context,
                         application,
                         connectorToken
                     )
                     TOKEN_NEW -> {
-                        if (!isConnected(context.applicationContext)) {
+                        if (!isConnected(context)) {
                             sendRegistrationFailed(
-                                context.applicationContext,
+                                context,
                                 application,
                                 connectorToken,
                                 message = "NextPush is not connected"
@@ -69,11 +70,11 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                             createQueue.add(connectorToken)
                             delayRemove(createQueue, connectorToken)
                             createApp(
-                                context.applicationContext,
+                                context,
                                 application,
                                 connectorToken
                             ) {
-                                sendEndpoint(context.applicationContext, connectorToken)
+                                sendEndpoint(context, connectorToken)
                                 createQueue.remove(connectorToken)
                             }
                         } else {
@@ -85,13 +86,13 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
             ACTION_UNREGISTER -> {
                 Log.i(TAG, "UNREGISTER")
                 val connectorToken = intent.getStringExtra(EXTRA_TOKEN) ?: ""
-                getDb(context.applicationContext).getPackageName(connectorToken) ?: return
+                getDb(context).getPackageName(connectorToken) ?: return
 
                 if (connectorToken !in delQueue) {
                     delQueue.add(connectorToken)
                     delayRemove(delQueue, connectorToken)
                     try {
-                        deleteApp(context.applicationContext, connectorToken) {
+                        deleteApp(context, connectorToken) {
                             Log.d(TAG, "Unregistration is finished")
                             delQueue.remove(connectorToken)
                         }
