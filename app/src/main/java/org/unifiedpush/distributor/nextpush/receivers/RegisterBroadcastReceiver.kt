@@ -28,9 +28,9 @@ import kotlin.concurrent.schedule
 private val createQueue = emptyList<String>().toMutableList()
 private val delQueue = emptyList<String>().toMutableList()
 
-class RegisterBroadcastReceiver : BroadcastReceiver() {
+private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
 
-    private val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
+class RegisterBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
