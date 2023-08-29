@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
+import android.widget.Toast
 import org.unifiedpush.distributor.nextpush.Database.Companion.getDb
 import org.unifiedpush.distributor.nextpush.account.Account.isConnected
 import org.unifiedpush.distributor.nextpush.distributor.* // ktlint-disable no-wildcard-imports
@@ -17,6 +18,7 @@ import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteApp
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendEndpoint
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendRegistrationFailed
 import org.unifiedpush.distributor.nextpush.utils.TAG
+import org.unifiedpush.distributor.nextpush.utils.getApplicationName
 import java.lang.Exception
 import java.util.Timer
 import kotlin.concurrent.schedule
@@ -57,6 +59,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                         connectorToken
                     )
                     TOKEN_NEW -> {
+                        val appName = context.getApplicationName(application) ?: application
                         if (!isConnected(context)) {
                             sendRegistrationFailed(
                                 context,
@@ -64,6 +67,11 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                                 connectorToken,
                                 message = "NextPush is not connected"
                             )
+                            Toast.makeText(
+                                context,
+                                "Cannot register $appName, NextPush is not connected.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             return
                         }
                         if (connectorToken !in createQueue) {
@@ -76,6 +84,11 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                             ) {
                                 sendEndpoint(context, connectorToken)
                                 createQueue.remove(connectorToken)
+                                Toast.makeText(
+                                    context,
+                                    "$appName registered.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         } else {
                             Log.d(TAG, "Already registering this token")
