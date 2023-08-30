@@ -4,9 +4,8 @@ import android.content.Context
 import android.util.Log
 import okhttp3.sse.EventSource
 import org.unifiedpush.distributor.nextpush.api.SSEListener
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.deleteWarningNotification
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showNoPingNotification
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showWarningNotification
+import org.unifiedpush.distributor.nextpush.utils.DisconnectedNotification
+import org.unifiedpush.distributor.nextpush.utils.NoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 object FailureHandler {
@@ -34,7 +33,7 @@ object FailureHandler {
         Log.d(TAG, "newEvent/Eventsource: $eventSource")
         this.eventSource = eventSource
         nFails = 0
-        deleteWarningNotification(context)
+        DisconnectedNotification(context).delete()
     }
 
     fun newPing() {
@@ -49,13 +48,13 @@ object FailureHandler {
             Log.d(TAG, "EventSource is known or null")
             nFails++
             if (nFails == 2) {
-                showWarningNotification(context)
+                DisconnectedNotification(context).show()
             }
             if (SSEListener.started && !SSEListener.pinged) {
                 Log.d(TAG, "The service has started and it has never received a ping.")
                 nFailsBeforePing++
                 if (nFailsBeforePing == 5) {
-                    showNoPingNotification(context)
+                    NoPingNotification(context).show()
                 }
             }
             this.eventSource = null
@@ -82,7 +81,7 @@ object FailureHandler {
         // and keep it running
         nFails = 5
         eventSource = null
-        showWarningNotification(context)
+        DisconnectedNotification(context).show()
     }
 
     fun clearFails() {

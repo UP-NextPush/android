@@ -10,8 +10,8 @@ import android.util.Log
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.Api
 import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
+import org.unifiedpush.distributor.nextpush.utils.ForegroundNotification
 import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.createForegroundNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 
 class StartService : Service() {
@@ -27,7 +27,7 @@ class StartService : Service() {
         super.onCreate()
         service = this
         Log.i(TAG, "StartService created")
-        val notification = createForegroundNotification(this)
+        val notification = ForegroundNotification(this).create()
         startForeground(NOTIFICATION_ID_FOREGROUND, notification)
     }
 

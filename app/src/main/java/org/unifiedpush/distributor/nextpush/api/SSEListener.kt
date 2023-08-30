@@ -16,8 +16,9 @@ import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.services.StartService.StartServiceCompanion.bufferedResponseChecked
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showLowKeepaliveNotification
-import org.unifiedpush.distributor.nextpush.utils.NotificationUtils.showStartErrorNotification
+import org.unifiedpush.distributor.nextpush.utils.LowKeepAliveNotification
+import org.unifiedpush.distributor.nextpush.utils.NoPingNotification
+import org.unifiedpush.distributor.nextpush.utils.NoStartNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
@@ -36,7 +37,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
             } else {
                 startingTimer = Timer().schedule(45_000L /* 45secs */) {
                     StartService.stopService()
-                    showStartErrorNotification(context)
+                    NoStartNotification(context).show()
                 }
             }
         }
@@ -62,6 +63,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
                 started = true
                 startingTimer?.cancel()
                 bufferedResponseChecked = true
+                NoStartNotification(context).delete()
             }
             "ping" -> {
                 pinged = true
@@ -72,7 +74,9 @@ class SSEListener(val context: Context) : EventSourceListener() {
                 keepalive = message.keepalive
                 Log.d(TAG, "New keepalive: $keepalive")
                 if (keepalive < 25) {
-                    showLowKeepaliveNotification(context, keepalive)
+                    LowKeepAliveNotification(context, it).show()
+                } else {
+                    LowKeepAliveNotification(context, it).delete()
                 }
             }
             "message" -> {
