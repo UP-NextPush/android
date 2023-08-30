@@ -18,6 +18,7 @@ import org.unifiedpush.distributor.nextpush.api.provider.* // ktlint-disable no-
 import org.unifiedpush.distributor.nextpush.api.provider.ApiProvider.Companion.mApiEndpoint
 import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class Api(val context: Context) {
 
@@ -35,8 +36,7 @@ class Api(val context: Context) {
 
     fun apiDestroy() {
         Log.d(TAG, "Destroying API")
-        syncSource?.cancel()
-        syncSource = null
+        syncSource.getAndSet(null)?.cancel()
     }
 
     fun apiSync() {
@@ -91,7 +91,12 @@ class Api(val context: Context) {
             .get()
             .build()
 
-        syncSource = EventSources.createFactory(client).newEventSource(request, SSEListener(context.applicationContext))
+        syncSource.set(
+            EventSources.createFactory(client).newEventSource(
+                request,
+                SSEListener(context.applicationContext)
+            )
+        )
         Log.d(TAG, "cSync done.")
     }
 
@@ -205,6 +210,6 @@ class Api(val context: Context) {
     }
 
     companion object {
-        private var syncSource: EventSource? = null
+        private val syncSource: AtomicReference<EventSource?> = AtomicReference(null)
     }
 }
