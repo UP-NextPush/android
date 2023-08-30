@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.util.concurrent.atomic.AtomicReference
 
 private const val DB_NAME = "apps_db"
 private const val DB_VERSION = 2
@@ -174,13 +175,14 @@ class Database(context: Context) :
     }
 
     companion object {
-        private lateinit var db: Database
+        private val db: AtomicReference<Database?> = AtomicReference(null)
 
         fun getDb(context: Context): Database {
-            if (!this::db.isInitialized) {
-                db = Database(context.applicationContext)
+            return db.get() ?: run {
+                val db = Database(context.applicationContext)
+                this.db.set(db)
+                return db
             }
-            return db
         }
     }
 }
