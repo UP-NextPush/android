@@ -3,61 +3,59 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import okhttp3.sse.EventSource
-import org.unifiedpush.distributor.nextpush.api.SSEListener
+import org.unifiedpush.distributor.nextpush.AppCompanion
 import org.unifiedpush.distributor.nextpush.utils.DisconnectedNotification
 import org.unifiedpush.distributor.nextpush.utils.NoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 object FailureHandler {
 
-    private var ttlFails = 0
-
-    var nFails = 0
-        private set(value) {
-            if (value > 0) {
-                ttlFails += 1
-            }
-            field = value
-        }
-
-    private var nFailsBeforePing = 0
-
+    private val ttlFails = AtomicInteger(0)
+    private val nFails = AtomicInteger(0)
+    private val nFailsBeforePing = AtomicInteger(0)
     // This is the last eventSource opened
-    private var eventSource: EventSource? = null
-        set(value) {
-            field?.cancel()
-            field = value
-        }
+    private val eventSource: AtomicReference<EventSource?> = AtomicReference(null)
 
+    private fun isRightEventSource(eventSource: EventSource?): Boolean {
+        return this.eventSource.get()?.let {
+            it == eventSource
+        } ?: true
+    }
     fun newEventSource(context: Context, eventSource: EventSource) {
         Log.d(TAG, "newEvent/Eventsource: $eventSource")
-        this.eventSource = eventSource
-        nFails = 0
+        this.eventSource.getAndSet(eventSource)?.cancel()
+        nFails.set(0)
         DisconnectedNotification(context).delete()
     }
 
-    fun newPing() {
-        nFailsBeforePing = 0
+    fun newPing(context: Context) {
+        nFailsBeforePing.set(0)
+        NoPingNotification(context).delete()
+    }
+
+    fun nFails(): Int {
+        return nFails.get()
     }
 
     fun newFail(context: Context, eventSource: EventSource?) {
         Log.d(TAG, "newFail/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
-        if (this.eventSource == null || this.eventSource == eventSource) {
+        if (isRightEventSource(eventSource)) {
             Log.d(TAG, "EventSource is known or null")
-            nFails++
-            if (nFails == 2) {
+            ttlFails.getAndIncrement()
+            if (nFails.incrementAndGet() == 2) {
                 DisconnectedNotification(context).show()
             }
-            if (SSEListener.started && !SSEListener.pinged) {
+            if (AppCompanion.started.get() && !AppCompanion.pinged.get()) {
                 Log.d(TAG, "The service has started and it has never received a ping.")
-                nFailsBeforePing++
-                if (nFailsBeforePing == 5) {
+                if (nFailsBeforePing.incrementAndGet() == 5) {
                     NoPingNotification(context).show()
                 }
             }
-            this.eventSource = null
+            this.eventSource.getAndSet(null)?.cancel()
         } else {
             eventSource?.cancel()
         }
@@ -67,10 +65,10 @@ object FailureHandler {
         Log.d(TAG, "once/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
-        if (this.eventSource == null || this.eventSource == eventSource) {
+        if (isRightEventSource(eventSource)) {
             Log.d(TAG, "EventSource is known or null")
-            nFails = 1
-            this.eventSource = null
+            nFails.set(1)
+            this.eventSource.getAndSet(null)?.cancel()
         } else {
             eventSource?.cancel()
         }
@@ -79,27 +77,28 @@ object FailureHandler {
     fun setMaxFails(context: Context) {
         // We set nFails to max to not restart the worker
         // and keep it running
-        nFails = 5
-        eventSource = null
+        nFails.set(5)
+        ttlFails.getAndIncrement()
+        this.eventSource.getAndSet(null)?.cancel()
         DisconnectedNotification(context).show()
     }
 
     fun clearFails() {
-        ttlFails = 0
-        nFails = 0
-        nFailsBeforePing = 0
-        eventSource = null
+        ttlFails.set(0)
+        nFails.set(0)
+        nFailsBeforePing.set(0)
+        this.eventSource.getAndSet(null)?.cancel()
     }
 
     fun hasFailed(orNeverStart: Boolean = true): Boolean {
         // nFails > 0 to be sure it is not actually restarting
-        return if (orNeverStart) { eventSource == null } else { false } || nFails > 0
+        return if (orNeverStart) { eventSource.get() == null } else { false } || nFails.get() > 0
     }
 
     fun getDebugInfo(): String {
-        return "ttlFails: $ttlFails\n" +
+        return "ttlFails: ${ttlFails.get()}\n" +
             "nFails: $nFails\n" +
             "nFailsBeforePing: $nFailsBeforePing\n" +
-            "eventSource null: ${eventSource == null}"
+            "eventSource null: ${eventSource.get() == null}"
     }
 }

@@ -7,15 +7,13 @@ import com.google.gson.Gson
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import org.unifiedpush.distributor.nextpush.AppCompanion
 import org.unifiedpush.distributor.nextpush.api.response.SSEResponse
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.deleteAppFromSSE
 import org.unifiedpush.distributor.nextpush.distributor.Distributor.sendMessage
-import org.unifiedpush.distributor.nextpush.receivers.StartReceiver
 import org.unifiedpush.distributor.nextpush.services.FailureHandler
-import org.unifiedpush.distributor.nextpush.services.RestartNetworkCallback
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
-import org.unifiedpush.distributor.nextpush.services.StartService.StartServiceCompanion.bufferedResponseChecked
 import org.unifiedpush.distributor.nextpush.utils.LowKeepAliveNotification
 import org.unifiedpush.distributor.nextpush.utils.NoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.NoStartNotification
@@ -31,10 +29,8 @@ class SSEListener(val context: Context) : EventSourceListener() {
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
         startingTimer?.cancel()
-        if (!bufferedResponseChecked) {
-            if (StartReceiver.booting) {
-                StartReceiver.booting = false
-            } else {
+        if (!AppCompanion.bufferedResponseChecked.get()) {
+            if (!AppCompanion.booting.getAndSet(false)) {
                 startingTimer = Timer().schedule(45_000L /* 45secs */) {
                     StartService.stopService()
                     NoStartNotification(context).show()
@@ -56,27 +52,29 @@ class SSEListener(val context: Context) : EventSourceListener() {
     override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
         Log.d(TAG, "New SSE message event: $type")
         StartService.wakeLock?.acquire(30000L /*30 secs*/)
-        lastEventDate = Calendar.getInstance()
+        AppCompanion.lastEventDate = Calendar.getInstance()
 
         when (type) {
             "start" -> {
-                started = true
+                AppCompanion.started.set(true)
                 startingTimer?.cancel()
-                bufferedResponseChecked = true
+                AppCompanion.bufferedResponseChecked.set(true)
                 NoStartNotification(context).delete()
             }
             "ping" -> {
-                pinged = true
-                FailureHandler.newPing()
+                AppCompanion.pinged.set(true)
+                FailureHandler.newPing(context)
             }
             "keepalive" -> {
                 val message = Gson().fromJson(data, SSEResponse::class.java)
-                keepalive = message.keepalive
-                Log.d(TAG, "New keepalive: $keepalive")
-                if (keepalive < 25) {
-                    LowKeepAliveNotification(context, it).show()
-                } else {
-                    LowKeepAliveNotification(context, it).delete()
+                message.keepalive.let {
+                    AppCompanion.keepalive.set(it)
+                    Log.d(TAG, "New keepalive: $it")
+                    if (it < 25) {
+                        LowKeepAliveNotification(context, it).show()
+                    } else {
+                        LowKeepAliveNotification(context, it).delete()
+                    }
                 }
             }
             "message" -> {
@@ -118,7 +116,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         response?.let {
             Log.d(TAG, "onFailure: ${it.code}")
         }
-        if (!RestartNetworkCallback.hasInternet) {
+        if (!AppCompanion.hasInternet.get()) {
             Log.d(TAG, "No Internet: do not restart")
             FailureHandler.once(eventSource)
             clearVars()
@@ -126,7 +124,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         }
         FailureHandler.newFail(context, eventSource)
         clearVars()
-        val delay = when (FailureHandler.nFails) {
+        val delay = when (FailureHandler.nFails()) {
             1 -> 2 // 2sec
             2 -> 5 // 5sec
             3 -> 20 // 20sec
@@ -150,18 +148,11 @@ class SSEListener(val context: Context) : EventSourceListener() {
 
     private fun clearVars() {
         startingTimer?.cancel()
-        started = false
-        pinged = false
+        AppCompanion.started.set(false)
+        AppCompanion.pinged.set(false)
     }
 
     companion object {
-        var lastEventDate: Calendar? = null
-        var keepalive = 900
-            private set
         private var startingTimer: TimerTask? = null
-        var pinged = false
-            private set
-        var started = false
-            private set
     }
 }

@@ -6,11 +6,14 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.util.Log
+import org.unifiedpush.distributor.nextpush.AppCompanion
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 class RestartNetworkCallback(val context: Context) : ConnectivityManager.NetworkCallback() {
-    private var connectivityManager: ConnectivityManager? = null
+    private val connectivityManager: AtomicReference<ConnectivityManager?> = AtomicReference(null)
 
     override fun onAvailable(network: Network) {
         Log.d(TAG, "Network is CONNECTED")
@@ -25,8 +28,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         networkCapabilities: NetworkCapabilities
     ) {
         if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
-            if (!hasInternet) {
-                hasInternet = true
+            if (AppCompanion.hasInternet.getAndSet(true)) {
                 Log.d(TAG, "Network Capabilities changed")
                 if (FailureHandler.hasFailed(orNeverStart = false)) {
                     Log.d(TAG, "Internet Cap: restarting worker")
@@ -38,22 +40,21 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
 
     override fun onLost(network: Network) {
         Log.d(TAG, "Network unavailable")
-        hasInternet = false
+        AppCompanion.hasInternet.set(false)
     }
 
     fun register() {
-        if (!registered) {
-            registered = true
-            connectivityManager?.let {
+        if (!registered.getAndSet(true)) {
+            connectivityManager.get()?.let {
                 Log.d(TAG, "ConnectivityManager already registered")
             } ?: run {
                 Log.d(TAG, "Registering new ConnectivityManager")
                 try {
-                    connectivityManager = (
+                    connectivityManager.set((
                         context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
                         ).apply {
                         registerDefaultNetworkCallback(this@RestartNetworkCallback)
-                    }
+                    })
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -63,15 +64,12 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
 
     fun unregister() {
         Log.d(TAG, "Unregistering ConnectivityManager")
-        connectivityManager?.unregisterNetworkCallback(this)
-        connectivityManager = null
-        registered = false
-        hasInternet = false
+        connectivityManager.getAndSet(null)?.unregisterNetworkCallback(this)
+        registered.set(false)
+        AppCompanion.hasInternet.set(false)
     }
 
     companion object {
-        private var registered = false
-        var hasInternet = false
-            private set
+        private val registered = AtomicBoolean(false)
     }
 }

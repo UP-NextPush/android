@@ -3,9 +3,8 @@ package org.unifiedpush.distributor.nextpush.services
 import android.content.Context
 import android.util.Log
 import androidx.work.* // ktlint-disable no-wildcard-imports
+import org.unifiedpush.distributor.nextpush.AppCompanion
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
-import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.keepalive
-import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -19,9 +18,9 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
         Log.d(TAG, "Working")
         val currentDate = Calendar.getInstance()
         val restartDate = Calendar.getInstance()
-        lastEventDate?.let {
+        AppCompanion.lastEventDate?.let {
             restartDate.time = it.time
-            restartDate.add(Calendar.SECOND, keepalive)
+            restartDate.add(Calendar.SECOND, AppCompanion.keepalive.get())
             Log.d(TAG, "restartDate: ${restartDate.time}")
             if (currentDate.after(restartDate)) {
                 Log.d(TAG, "Restarting")
@@ -51,7 +50,7 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             val work = OneTimeWorkRequestBuilder<RestartWorker>().apply {
                 setInitialDelay(delay, TimeUnit.SECONDS)
             }
-            lastEventDate = null
+            AppCompanion.lastEventDate = null
             WorkManager.getInstance(context).enqueueUniqueWork(
                 UNIQUE_ONETIME_WORK_TAG,
                 ExistingWorkPolicy.REPLACE,

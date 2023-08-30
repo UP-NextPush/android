@@ -7,12 +7,13 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
+import org.unifiedpush.distributor.nextpush.AppCompanion
 import org.unifiedpush.distributor.nextpush.account.Account.getAccount
 import org.unifiedpush.distributor.nextpush.api.Api
-import org.unifiedpush.distributor.nextpush.api.SSEListener.Companion.lastEventDate
 import org.unifiedpush.distributor.nextpush.utils.ForegroundNotification
 import org.unifiedpush.distributor.nextpush.utils.NOTIFICATION_ID_FOREGROUND
 import org.unifiedpush.distributor.nextpush.utils.TAG
+import java.util.concurrent.atomic.AtomicReference
 
 class StartService : Service() {
 
@@ -25,7 +26,7 @@ class StartService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        service = this
+        service.set(this)
         Log.i(TAG, "StartService created")
         val notification = ForegroundNotification(this).create()
         startForeground(NOTIFICATION_ID_FOREGROUND, notification)
@@ -80,18 +81,17 @@ class StartService : Service() {
     companion object StartServiceCompanion {
         private const val WAKE_LOCK_TAG = "NextPush:StartService:lock"
 
-        private var service: StartService? = null
+        private val service: AtomicReference<StartService?> = AtomicReference(null)
         var isServiceStarted = false
             private set
         var wakeLock: PowerManager.WakeLock? = null
             private set
-        var bufferedResponseChecked = false
 
         fun startListener(context: Context) {
             if (isServiceStarted && !FailureHandler.hasFailed()) return
             Log.d(TAG, "Starting the Listener")
             Log.d(TAG, "Service is started: $isServiceStarted")
-            Log.d(TAG, "nFails: ${FailureHandler.nFails}")
+            Log.d(TAG, "nFails: ${FailureHandler.nFails()}")
             val serviceIntent = Intent(context, StartService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
@@ -103,9 +103,9 @@ class StartService : Service() {
         fun stopService(block: () -> Unit = {}) {
             Log.d(TAG, "Stopping Service")
             isServiceStarted = false
-            bufferedResponseChecked = false
-            lastEventDate = null
-            service?.stopSelf()
+            AppCompanion.bufferedResponseChecked.set(false)
+            AppCompanion.lastEventDate = null
+            service.get()?.stopSelf()
             block()
         }
     }
