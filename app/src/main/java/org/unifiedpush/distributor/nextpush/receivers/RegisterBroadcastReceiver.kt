@@ -36,7 +36,7 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(rContext: Context, intent: Intent?) {
         val context = rContext.applicationContext
-        wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+        val wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
         wakeLock?.acquire(30000L /*30 secs*/)
@@ -128,9 +128,5 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
         Timer().schedule(1_000L /* 1sec */) {
             list.remove(token)
         }
-    }
-
-    companion object {
-        private var wakeLock: PowerManager.WakeLock? = null
     }
 }
