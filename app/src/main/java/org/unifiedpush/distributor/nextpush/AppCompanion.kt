@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object AppCompanion {
     val booting = AtomicBoolean(false)
-    val hasInternet = AtomicBoolean(false)
+    val hasInternet = AtomicBoolean(true)
     val started = AtomicBoolean(false)
     val pinged = AtomicBoolean(false)
     val bufferedResponseChecked = AtomicBoolean(false)
