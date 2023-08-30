@@ -20,9 +20,10 @@ import org.unifiedpush.distributor.nextpush.api.response.ApiResponse
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-class Api(val context: Context) {
+class Api(context: Context) {
 
     private val TAG = Api::class.java.simpleName
+    private val context = context.applicationContext
 
     private val baseUrl: String
         get() = getAccount(context)?.url ?: "http://0.0.0.0/"
@@ -94,7 +95,7 @@ class Api(val context: Context) {
         syncSource.set(
             EventSources.createFactory(client).newEventSource(
                 request,
-                SSEListener(context.applicationContext)
+                SSEListener(context)
             )
         )
         Log.d(TAG, "cSync done.")
