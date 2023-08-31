@@ -51,7 +51,7 @@ class AppListAdapter(context: Context, private val resource: Int, apps: List<App
         }
         if (selectedItemsIds.get(position)) {
             convertView?.setBackgroundColor(
-                MaterialColors.getColor(convertView, R.attr.colorOnTertiary)
+                MaterialColors.getColor(convertView, com.google.android.material.R.attr.colorOnTertiary)
             )
         } else {
             convertView?.setBackgroundResource(0)
