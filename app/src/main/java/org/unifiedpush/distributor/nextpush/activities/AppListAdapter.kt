@@ -28,9 +28,9 @@ class AppListAdapter(context: Context, private val resource: Int, apps: List<App
         var description: TextView? = null
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+    override fun getView(position: Int, pConvertView: View?, parent: ViewGroup): View {
         var viewHolder: ViewHolder? = null
-        val convertView = convertView?.apply {
+        val convertView = pConvertView?.apply {
             viewHolder = tag as ViewHolder
         } ?: run {
             val rConvertView = inflater.inflate(resource, parent, false)
