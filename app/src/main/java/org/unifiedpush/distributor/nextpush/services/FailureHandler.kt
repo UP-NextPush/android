@@ -18,7 +18,7 @@ object FailureHandler {
     // This is the last eventSource opened
     private val eventSource: AtomicReference<EventSource?> = AtomicReference(null)
 
-    private fun isRightEventSource(eventSource: EventSource?): Boolean {
+    private fun isCurrentEventSource(eventSource: EventSource?): Boolean {
         return this.eventSource.get()?.let {
             it == eventSource
         } ?: true
@@ -39,11 +39,12 @@ object FailureHandler {
         return nFails.get()
     }
 
-    fun newFail(context: Context, eventSource: EventSource?) {
+    // Returns true if the fail is from the current eventSource
+    fun newFail(context: Context, eventSource: EventSource?): Boolean {
         Log.d(TAG, "newFail/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
-        if (isRightEventSource(eventSource)) {
+        return if (isCurrentEventSource(eventSource)) {
             Log.d(TAG, "EventSource is known or null")
             ttlFails.getAndIncrement()
             if (nFails.incrementAndGet() == 2) {
@@ -56,21 +57,28 @@ object FailureHandler {
                 }
             }
             this.eventSource.getAndSet(null)?.cancel()
+            true
         } else {
+            Log.d(TAG, "This is an old EventSource.")
             eventSource?.cancel()
+            false
         }
     }
 
-    fun once(eventSource: EventSource?) {
+    // Returns true if the fail is from the current eventSource
+    fun once(eventSource: EventSource?): Boolean {
         Log.d(TAG, "once/Eventsource: $eventSource")
         // ignore fails from a possible old eventSource
         // if we are already reconnected
-        if (isRightEventSource(eventSource)) {
+        return if (isCurrentEventSource(eventSource)) {
             Log.d(TAG, "EventSource is known or null")
             nFails.set(1)
             this.eventSource.getAndSet(null)?.cancel()
+            true
         } else {
+            Log.d(TAG, "This is an old EventSource.")
             eventSource?.cancel()
+            false
         }
     }
 
