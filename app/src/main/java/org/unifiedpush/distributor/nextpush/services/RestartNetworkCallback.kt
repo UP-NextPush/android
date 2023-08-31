@@ -69,7 +69,7 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
         Log.d(TAG, "Unregistering ConnectivityManager")
         connectivityManager.getAndSet(null)?.unregisterNetworkCallback(this)
         registered.set(false)
-        AppCompanion.hasInternet.set(false)
+        AppCompanion.hasInternet.set(true) // reset default value
     }
 
     companion object {
