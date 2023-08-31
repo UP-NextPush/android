@@ -50,11 +50,14 @@ class RestartNetworkCallback(val context: Context) : ConnectivityManager.Network
             } ?: run {
                 Log.d(TAG, "Registering new ConnectivityManager")
                 try {
-                    connectivityManager.set((
-                        context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
-                        ).apply {
-                        registerDefaultNetworkCallback(this@RestartNetworkCallback)
-                    })
+                    connectivityManager.set(
+                        (
+                            context.getSystemService(Service.CONNECTIVITY_SERVICE)
+                                as ConnectivityManager
+                            ).apply {
+                            registerDefaultNetworkCallback(this@RestartNetworkCallback)
+                        }
+                    )
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

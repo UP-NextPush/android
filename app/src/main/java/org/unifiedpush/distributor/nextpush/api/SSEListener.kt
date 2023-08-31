@@ -31,7 +31,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         val timer: TimerTask? = if (
             !AppCompanion.bufferedResponseChecked.get() &&
             !AppCompanion.booting.getAndSet(false)
-            ) {
+        ) {
             Timer().schedule(45_000L /* 45secs */) {
                 if (FailureHandler.newFail(context, eventSource)) {
                     StartService.stopService()

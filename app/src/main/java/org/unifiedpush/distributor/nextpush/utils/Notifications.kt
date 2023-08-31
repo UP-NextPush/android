@@ -41,7 +41,7 @@ open class AppNotification(
     private val context: Context,
     private val notificationId: Int,
     private val notificationData: NotificationData,
-    private val channelData: ChannelData,
+    private val channelData: ChannelData
 ) {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -149,10 +149,10 @@ open class AppNotification(
 
 private val Context.warningChannelData: ChannelData
     get() = ChannelData(
-    "${this.getString(R.string.app_name)}.Warning",
-    "Warning",
-    NotificationManager.IMPORTANCE_HIGH,
-    this.getString(R.string.warning_notif_description)
+        "${this.getString(R.string.app_name)}.Warning",
+        "Warning",
+        NotificationManager.IMPORTANCE_HIGH,
+        this.getString(R.string.warning_notif_description)
     )
 
 class DisconnectedNotification(context: Context) : AppNotification(

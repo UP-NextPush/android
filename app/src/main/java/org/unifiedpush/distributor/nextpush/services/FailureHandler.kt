@@ -15,6 +15,7 @@ object FailureHandler {
     private val ttlFails = AtomicInteger(0)
     private val nFails = AtomicInteger(0)
     private val nFailsBeforePing = AtomicInteger(0)
+
     // This is the last eventSource opened
     private val eventSource: AtomicReference<EventSource?> = AtomicReference(null)
 
