@@ -10,8 +10,8 @@ android {
         applicationId "org.unifiedpush.distributor.nextpush"
         minSdk 24
         targetSdk 33
-        versionCode 26
-        versionName "1.7.1"
+        versionCode 27
+        versionName "1.8.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

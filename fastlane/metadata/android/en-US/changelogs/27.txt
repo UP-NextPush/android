@@ -1,0 +1,5 @@
+- Inform user when a new app is registered
+- Avoid false positive warning
+- Avoid useless restart
+- Internal optimizations
+- Bump dependencies
