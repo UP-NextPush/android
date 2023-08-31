@@ -43,8 +43,6 @@ open class AppNotification(
     private val notificationData: NotificationData,
     private val channelData: ChannelData,
 ) {
-    private val shown = AtomicBoolean(false)
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager =
@@ -142,6 +140,10 @@ open class AppNotification(
         if (shown.getAndSet(false)) {
             deleteNotification(notificationId)
         }
+    }
+
+    companion object {
+        private val shown = AtomicBoolean(false)
     }
 }
 
