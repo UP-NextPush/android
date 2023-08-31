@@ -15,28 +15,33 @@ import org.unifiedpush.distributor.nextpush.services.FailureHandler
 import org.unifiedpush.distributor.nextpush.services.RestartWorker
 import org.unifiedpush.distributor.nextpush.services.StartService
 import org.unifiedpush.distributor.nextpush.utils.LowKeepAliveNotification
-import org.unifiedpush.distributor.nextpush.utils.NoPingNotification
 import org.unifiedpush.distributor.nextpush.utils.NoStartNotification
 import org.unifiedpush.distributor.nextpush.utils.TAG
 import java.lang.Exception
 import java.util.Calendar
 import java.util.Timer
 import java.util.TimerTask
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.schedule
 
 class SSEListener(val context: Context) : EventSourceListener() {
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         FailureHandler.newEventSource(context, eventSource)
-        startingTimer?.cancel()
-        if (!AppCompanion.bufferedResponseChecked.get()) {
-            if (!AppCompanion.booting.getAndSet(false)) {
-                startingTimer = Timer().schedule(45_000L /* 45secs */) {
+        val timer: TimerTask? = if (
+            !AppCompanion.bufferedResponseChecked.get() &&
+            !AppCompanion.booting.getAndSet(false)
+            ) {
+            Timer().schedule(45_000L /* 45secs */) {
+                if (FailureHandler.newFail(context, eventSource)) {
                     StartService.stopService()
                     NoStartNotification(context).show()
                 }
             }
+        } else {
+            null
         }
+        startingTimer.getAndSet(timer)?.cancel()
         StartService.wakeLock?.let {
             while (it.isHeld) {
                 it.release()
@@ -57,7 +62,7 @@ class SSEListener(val context: Context) : EventSourceListener() {
         when (type) {
             "start" -> {
                 AppCompanion.started.set(true)
-                startingTimer?.cancel()
+                startingTimer.getAndSet(null)?.cancel()
                 AppCompanion.bufferedResponseChecked.set(true)
                 NoStartNotification(context).delete()
             }
@@ -150,12 +155,12 @@ class SSEListener(val context: Context) : EventSourceListener() {
     }
 
     private fun clearVars() {
-        startingTimer?.cancel()
+        startingTimer.getAndSet(null)?.cancel()
         AppCompanion.started.set(false)
         AppCompanion.pinged.set(false)
     }
 
     companion object {
-        private var startingTimer: TimerTask? = null
+        private var startingTimer: AtomicReference<TimerTask?> = AtomicReference(null)
     }
 }
