@@ -63,7 +63,7 @@ class SSOAccountFactory : AccountFactory {
                 data,
                 activity
             ) { account ->
-                SingleAccountHelper.setCurrentAccount(activity.applicationContext, account.name)
+                SingleAccountHelper.commitCurrentAccount(activity.applicationContext, account.name)
                 success = true
             }
         } catch (_: AccountImportCancelledException) {}

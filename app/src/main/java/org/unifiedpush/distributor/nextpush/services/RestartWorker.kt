@@ -46,7 +46,7 @@ class RestartWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(
                     UNIQUE_PERIODIC_WORK_TAG,
-                    ExistingPeriodicWorkPolicy.REPLACE,
+                    ExistingPeriodicWorkPolicy.UPDATE,
                     work.build()
                 )
         }

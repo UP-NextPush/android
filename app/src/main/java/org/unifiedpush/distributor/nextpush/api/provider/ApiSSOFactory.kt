@@ -27,7 +27,7 @@ class ApiSSOFactory(val context: Context) : ApiProviderFactory {
                     NextcloudRetrofitApiBuilder(nextcloudAPI, ApiProvider.mApiEndpoint)
                         .create(ApiProvider::class.java).let {
                             block(it) {
-                                nextcloudAPI.stop()
+                                nextcloudAPI.close()
                             }
                         }
                 }
