@@ -5,7 +5,7 @@ steps:
           branch: main
           event: [push, pull_request]
         commands:
-          - ./gradlew build --stacktrace
+          - ./gradlew assembleRelease ktlintCheck --stacktrace
 
     build:
         image: runmymind/docker-android-sdk:latest
