@@ -27,9 +27,6 @@ import kotlin.concurrent.schedule
  * THIS SERVICE IS USED BY OTHER APPS TO REGISTER
  */
 
-private val createQueue = emptyList<String>().toMutableList()
-private val delQueue = emptyList<String>().toMutableList()
-
 private const val WAKE_LOCK_TAG = "NextPush:RegisterBroadcastReceiver:lock"
 
 class RegisterBroadcastReceiver : BroadcastReceiver() {
@@ -51,49 +48,53 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                     Log.w(TAG, "Trying to register an app without packageName")
                     return
                 }
-                when (checkToken(context, connectorToken, application)) {
-                    TOKEN_REGISTERED_OK -> sendEndpoint(context, connectorToken)
-                    TOKEN_NOK -> sendRegistrationFailed(
-                        context,
-                        application,
-                        connectorToken
-                    )
-                    TOKEN_NEW -> {
-                        val appName = context.getApplicationName(application) ?: application
-                        if (!isConnected(context)) {
+                if (!createQueue.containsTokenElseAdd(connectorToken)) {
+                    when (checkToken(context, connectorToken, application)) {
+                        TOKEN_REGISTERED_OK -> {
+                            sendEndpoint(context, connectorToken)
+                            createQueue.removeToken(connectorToken)
+                        }
+                        TOKEN_NOK -> {
                             sendRegistrationFailed(
                                 context,
                                 application,
-                                connectorToken,
-                                message = "NextPush is not connected"
+                                connectorToken
                             )
-                            Toast.makeText(
-                                context,
-                                "Cannot register $appName, NextPush is not connected.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return
+                            createQueue.removeToken(connectorToken)
                         }
-                        if (connectorToken !in createQueue) {
-                            createQueue.add(connectorToken)
-                            delayRemove(createQueue, connectorToken)
+                        TOKEN_NEW -> {
+                            val appName = context.getApplicationName(application) ?: application
+                            if (!isConnected(context)) {
+                                sendRegistrationFailed(
+                                    context,
+                                    application,
+                                    connectorToken,
+                                    message = "NextPush is not connected"
+                                )
+                                Toast.makeText(
+                                    context,
+                                    "Cannot register $appName, NextPush is not connected.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return
+                            }
                             createApp(
                                 context,
                                 application,
                                 connectorToken
                             ) {
                                 sendEndpoint(context, connectorToken)
-                                createQueue.remove(connectorToken)
+                                createQueue.removeToken(connectorToken)
                                 Toast.makeText(
                                     context,
                                     "$appName registered.",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                        } else {
-                            Log.d(TAG, "Already registering this token")
                         }
                     }
+                } else {
+                    Log.d(TAG, "Already registering this token")
                 }
             }
             ACTION_UNREGISTER -> {
@@ -101,13 +102,11 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
                 val connectorToken = intent.getStringExtra(EXTRA_TOKEN) ?: ""
                 getDb(context).getPackageName(connectorToken) ?: return
 
-                if (connectorToken !in delQueue) {
-                    delQueue.add(connectorToken)
-                    delayRemove(delQueue, connectorToken)
+                if (!delQueue.containsTokenElseAdd(connectorToken)) {
                     try {
                         deleteApp(context, connectorToken) {
                             Log.d(TAG, "Unregistration is finished")
-                            delQueue.remove(connectorToken)
+                            delQueue.removeToken(connectorToken)
                         }
                     } catch (e: Exception) {
                         Log.d(TAG, "Could not delete app")
@@ -124,9 +123,33 @@ class RegisterBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun MutableList<String>.containsTokenElseAdd(connectorToken: String): Boolean {
+        return synchronized(this) {
+            if (connectorToken !in this) {
+                Log.d(TAG, "Token: $this")
+                this.add(connectorToken)
+                delayRemove(this, connectorToken)
+                false
+            } else {
+                true
+            }
+        }
+    }
+
+    private fun MutableList<String>.removeToken(connectorToken: String) {
+        synchronized(this) {
+            this.remove(connectorToken)
+        }
+    }
+
     private fun delayRemove(list: MutableList<String>, token: String) {
         Timer().schedule(1_000L /* 1sec */) {
-            list.remove(token)
+            list.removeToken(token)
         }
+    }
+
+    companion object {
+        private val createQueue = emptyList<String>().toMutableList()
+        private val delQueue = emptyList<String>().toMutableList()
     }
 }
