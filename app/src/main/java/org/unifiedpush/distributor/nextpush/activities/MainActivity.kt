@@ -272,7 +272,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         alert.setNegativeButton(getString(R.string.dialog_no)) { dialog, _ -> dialog.dismiss() }
                         alert.setOnCancelListener {
-                            Log.d(TAG, "Cancelled")
+                            Log.d(TAG, "Canceled")
                         }
                         preventListReset = true
                         alert.show()

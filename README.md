@@ -14,7 +14,7 @@ UnifiedPush provider for Nextcloud - android application
 
 **Android Apps**
 
-[0] [Nextcloud Application](https://f-droid.org/packages/com.nextcloud.client/) - For SSO login (recommanded)
+[0] [Nextcloud Application](https://f-droid.org/packages/com.nextcloud.client/) - For SSO login (recommended)
 
 [1] [NextPush Client](https://f-droid.org/en/packages/org.unifiedpush.distributor.nextpush/) - This app
 
@@ -24,9 +24,9 @@ UnifiedPush provider for Nextcloud - android application
 
 ## Usage
 
-1. (Recommanded) Install and sign into your Nextcloud account using the official Nextcloud Application [0].
+1. (Recommended) Install and sign into your Nextcloud account using the official Nextcloud Application [0].
 2. Install the NextPush client [1] and sign into your Nextcloud account.
-  a. (Recommanded) With the Nextcloud file application (SSO)
+  a. (Recommended) With the Nextcloud file application (SSO)
   b. Manually, you will need to create an application password for NextPush.
 3. Install one application supporting UnifiedPush [2], or UP-Example [3]. Login into the application if you need to, for instance with your mastodon account or with your matrix account.
 4. The application will automatically detect NextPush and use it to send notifications.
