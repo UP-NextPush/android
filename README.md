@@ -8,9 +8,11 @@ UnifiedPush provider for Nextcloud - android application
 
 ## Requirements
 
+You need the UnifiedPUsh provider on the server, and at least the NextPush client on Android:
+
 **Nextcloud Server**
 
-[Server App Install](https://github.com/UP-NextPush/server-app)
+[UnifiedPush Provider App on Nextcloud Server](https://github.com/UP-NextPush/server-app)
 
 **Android Apps**
 
