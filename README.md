@@ -1,5 +1,7 @@
 # NextPush - Android
 
+Moved to <https://codeberg.org/NextPush/nextpush-android>
+
 UnifiedPush provider for Nextcloud - android application 
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
